@@ -1,0 +1,19 @@
+{
+    "appKeys": {},
+    "capabilities": [
+        ""
+    ],
+    "companyName": "Tinnvec",
+    "longName": "Tinntime",
+    "projectType": "native",
+    "resources": {
+        "media": []
+    },
+    "shortName": "Tinntime",
+    "uuid": "545be81b-423d-4f4d-96a8-5eed25a20e0a",
+    "versionCode": 1,
+    "versionLabel": "0.1",
+    "watchapp": {
+        "watchface": true
+    }
+}
