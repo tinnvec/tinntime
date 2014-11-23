@@ -13,53 +13,28 @@
         "media": [
             {
                 "file": "fonts/Inconsolata-Bold.ttf",
-                "name": "FONT_INCONSOLATA_BOLD_20",
-                "type": "font"
-            },
-            {
-                "file": "fonts/Inconsolata-Bold.ttf",
-                "name": "FONT_INCONSOLATA_BOLD_46",
-                "type": "font"
-            },
-            {
-                "file": "fonts/Inconsolata-Bold.ttf",
-                "name": "FONT_INCONSOLATA_BOLD_14",
+                "name": "FONT_INCONSOLATA_BOLD_54",
                 "type": "font"
             },
             {
                 "file": "fonts/Inconsolata-Regular.ttf",
-                "name": "FONT_INCONSOLATA_20",
+                "name": "FONT_INCONSOLATA_48",
                 "type": "font"
             },
             {
                 "file": "fonts/Inconsolata-Regular.ttf",
-                "name": "FONT_INCONSOLATA_46",
+                "name": "FONT_INCONSOLATA_54",
                 "type": "font"
             },
             {
                 "file": "fonts/Inconsolata-Regular.ttf",
-                "name": "FONT_INCONSOLATA_14",
+                "name": "FONT_INCONSOLATA_16",
                 "type": "font"
             },
             {
                 "file": "images/background_black.png",
                 "name": "IMAGE_BACKGROUND",
                 "type": "png"
-            },
-            {
-                "file": "fonts/DroidSansMono.ttf",
-                "name": "FONT_DROID_SANS_MONO_46",
-                "type": "font"
-            },
-            {
-                "file": "fonts/DroidSansMono.ttf",
-                "name": "FONT_DROID_SANS_MONO_20",
-                "type": "font"
-            },
-            {
-                "file": "fonts/DroidSansMono.ttf",
-                "name": "FONT_DROID_SANS_MONO_14",
-                "type": "font"
             }
         ]
     },
