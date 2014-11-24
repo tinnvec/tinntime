@@ -1,6 +1,8 @@
 {
     "appKeys": {
-        "KEY_CONDITIONS": 1,
+        "KEY_CONDITIONS": 2,
+        "KEY_CONDITIONS_ICON": 1,
+        "KEY_LOCATION": 3,
         "KEY_TEMPERATURE": 0
     },
     "capabilities": [
@@ -11,6 +13,56 @@
     "projectType": "native",
     "resources": {
         "media": [
+            {
+                "file": "images/unkonown.png",
+                "name": "IMAGE_UNKNOWN",
+                "type": "png"
+            },
+            {
+                "file": "images/fog.png",
+                "name": "IMAGE_FOG",
+                "type": "png"
+            },
+            {
+                "file": "images/snow.png",
+                "name": "IMAGE_SNOW",
+                "type": "png"
+            },
+            {
+                "file": "images/thunderstorm.png",
+                "name": "IMAGE_THUNDERSTORM",
+                "type": "png"
+            },
+            {
+                "file": "images/rain.png",
+                "name": "IMAGE_RAIN",
+                "type": "png"
+            },
+            {
+                "file": "images/clouds.png",
+                "name": "IMAGE_CLOUDS",
+                "type": "png"
+            },
+            {
+                "file": "images/night_few_clouds.png",
+                "name": "IMAGE_NIGHT_FEW_CLOUDS",
+                "type": "png"
+            },
+            {
+                "file": "images/day_few_clouds.png",
+                "name": "IMAGE_DAY_FEW_CLOUDS",
+                "type": "png"
+            },
+            {
+                "file": "images/night_clear.png",
+                "name": "IMAGE_NIGHT_CLEAR",
+                "type": "png"
+            },
+            {
+                "file": "images/day_clear.png",
+                "name": "IMAGE_DAY_CLEAR",
+                "type": "png"
+            },
             {
                 "file": "fonts/Inconsolata-Bold.ttf",
                 "name": "FONT_INCONSOLATA_BOLD_54",

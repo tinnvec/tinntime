@@ -7,27 +7,42 @@ var xhrRequest = function(url, type, callback) {
   xhr.send();
 };
 
+function capitalizeEachWord(str) {
+  return str.replace(/\w\S*/g, function(txt) {
+    return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+  });
+}
+
 function locationSuccess(pos) {
   // Construct URL
   var url = "http://api.openweathermap.org/data/2.5/weather?lat=" + pos.coords.latitude + "&lon=" + pos.coords.longitude;
   
   // Send request to OpenWeatherMap
   xhrRequest(url, 'GET', function(responseText) {
-    // responseText contains a JSON object with weatehr info
+    // responseText contains a JSON object with weather info
     var json = JSON.parse(responseText);
     
     // Temperature in Kelvin requires adjustment
     var temperature = Math.round(json.main.temp * 9/5 - 459.675);
     console.log("Temperature is " + temperature);
     
+    // Conditions Icon string
+    var conditions_icon = json.weather[0].icon;
+    console.log("Conditions Icon: " + conditions_icon);
+    
     // Conditions
-    var conditions = json.weather[0].main;
+    var conditions = capitalizeEachWord(json.weather[0].description);
     console.log("Conditions are " + conditions);
+    
+    var location = json.name;
+    console.log("Location is " + location);
     
     // Assemble dictionary using our keys
     var dictionary = {
       "KEY_TEMPERATURE": temperature,
-      "KEY_CONDITIONS": conditions
+      "KEY_CONDITIONS_ICON": conditions_icon,
+      "KEY_CONDITIONS": conditions,
+      "KEY_LOCATION": location
     };
     
     // Send to Pebble
