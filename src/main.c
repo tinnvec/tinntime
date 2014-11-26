@@ -26,7 +26,6 @@ static GBitmap *s_conditions_rain_bitmap;
 static GBitmap *s_conditions_thunderstorm_bitmap;
 static GBitmap *s_conditions_snow_bitmap;
 static GBitmap *s_conditions_fog_bitmap;
-static GBitmap *s_conditions_unknown_bitmap;
 
 static void update_time() {
   // Get a tm structure
@@ -71,7 +70,6 @@ static void main_window_load(Window *window) {
   s_conditions_thunderstorm_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_THUNDERSTORM);
   s_conditions_snow_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_SNOW);
   s_conditions_fog_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_FOG);
-  s_conditions_unknown_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_UNKNOWN);
   
   // Create Background Layer
   s_background_layer = bitmap_layer_create(GRect(0, 0, 144, 168));
@@ -80,7 +78,6 @@ static void main_window_load(Window *window) {
   // Create conditions icon Layer
   s_conditions_icon_layer = bitmap_layer_create(GRect(0, 1, 60, 56));
   bitmap_layer_set_alignment(s_conditions_icon_layer, GAlignTop);
-  bitmap_layer_set_bitmap(s_conditions_icon_layer, s_conditions_unknown_bitmap);
   
   // Create temperature layer
   s_temperature_layer = text_layer_create(GRect(48, -8, 96, 56));
@@ -95,7 +92,6 @@ static void main_window_load(Window *window) {
   text_layer_set_background_color(s_conditions_layer, GColorClear);
   text_layer_set_text_color(s_conditions_layer, GColorWhite);
   text_layer_set_text_alignment(s_conditions_layer, GTextAlignmentCenter);
-  text_layer_set_text(s_conditions_layer, "Loading...");
   text_layer_set_font(s_conditions_layer, s_date_font);
   
   // Create time TextLayer
@@ -119,7 +115,6 @@ static void main_window_load(Window *window) {
   text_layer_set_background_color(s_location_layer, GColorClear);
   text_layer_set_text_color(s_location_layer, GColorWhite);
   text_layer_set_text_alignment(s_location_layer, GTextAlignmentCenter);
-  text_layer_set_text(s_location_layer, "Loading...");
   text_layer_set_font(s_location_layer, s_date_font);
   
   // Build window layers
@@ -159,7 +154,6 @@ static void main_window_unload(Window *window) {
   gbitmap_destroy(s_conditions_thunderstorm_bitmap);
   gbitmap_destroy(s_conditions_snow_bitmap);
   gbitmap_destroy(s_conditions_fog_bitmap);
-  gbitmap_destroy(s_conditions_unknown_bitmap);
   
   // Destroy BitmapLayers
   bitmap_layer_destroy(s_conditions_icon_layer);
@@ -229,7 +223,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
                    strcmp(t->value->cstring, "50n") == 0) {
           icon = s_conditions_fog_bitmap; // Mist Day/Night
         } else {
-          icon = s_conditions_unknown_bitmap; // Unknown
+          icon = NULL; // Unknown
         }
         break;
       case KEY_CONDITIONS:
