@@ -13,9 +13,12 @@ static TextLayer *s_conditions_layer;
 static TextLayer *s_time_layer;
 static TextLayer *s_date_layer;
 static TextLayer *s_location_layer;
+static TextLayer *s_pebble_battery_layer;
+static Layer *s_pebble_battery_visual_layer;
 static GFont s_temperature_font;
 static GFont s_time_font;
 static GFont s_date_font;
+static GFont s_battery_font;
 static GBitmap *s_background_bitmap;
 static GBitmap *s_conditions_day_clear_bitmap;
 static GBitmap *s_conditions_night_clear_bitmap;
@@ -26,6 +29,7 @@ static GBitmap *s_conditions_rain_bitmap;
 static GBitmap *s_conditions_thunderstorm_bitmap;
 static GBitmap *s_conditions_snow_bitmap;
 static GBitmap *s_conditions_fog_bitmap;
+BatteryChargeState battery_state;
 
 static void update_time() {
   // Get a tm structure
@@ -35,7 +39,6 @@ static void update_time() {
   // Create a long-lived buffer
   static char time_buffer[] = "--:--";
   static char date_buffer[] = "Wed, September 30";
-  
   
   // Write the current hours and minutes into the buffer
   if(clock_is_24h_style() == true) {
@@ -53,113 +56,6 @@ static void update_time() {
   text_layer_set_text(s_date_layer, date_buffer);
 }
 
-static void main_window_load(Window *window) {
-  // Create GFonts
-  s_temperature_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_INCONSOLATA_48));
-  s_time_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_INCONSOLATA_BOLD_54));
-  s_date_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_INCONSOLATA_16));
-  
-  // Create GBitmaps
-  s_background_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_BACKGROUND);
-  s_conditions_day_clear_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_DAY_CLEAR);
-  s_conditions_night_clear_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_NIGHT_CLEAR);
-  s_conditions_day_few_clouds_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_DAY_FEW_CLOUDS);
-  s_conditions_night_few_clouds_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_NIGHT_FEW_CLOUDS);
-  s_conditions_clouds_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_CLOUDS);
-  s_conditions_rain_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_RAIN);
-  s_conditions_thunderstorm_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_THUNDERSTORM);
-  s_conditions_snow_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_SNOW);
-  s_conditions_fog_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_FOG);
-  
-  // Create Background Layer
-  s_background_layer = bitmap_layer_create(GRect(0, 0, 144, 168));
-  bitmap_layer_set_bitmap(s_background_layer, s_background_bitmap);
-  
-  // Create conditions icon Layer
-  s_conditions_icon_layer = bitmap_layer_create(GRect(0, 1, 60, 56));
-  bitmap_layer_set_alignment(s_conditions_icon_layer, GAlignTop);
-  
-  // Create temperature layer
-  s_temperature_layer = text_layer_create(GRect(48, -8, 96, 56));
-  text_layer_set_background_color(s_temperature_layer, GColorClear);
-  text_layer_set_text_color(s_temperature_layer, GColorWhite);
-  text_layer_set_text_alignment(s_temperature_layer, GTextAlignmentRight);
-  text_layer_set_text(s_temperature_layer, "--°");
-  text_layer_set_font(s_temperature_layer, s_temperature_font);
-  
-  // Create conditions layer
-  s_conditions_layer = text_layer_create(GRect(0, 42, 144, 20));
-  text_layer_set_background_color(s_conditions_layer, GColorClear);
-  text_layer_set_text_color(s_conditions_layer, GColorWhite);
-  text_layer_set_text_alignment(s_conditions_layer, GTextAlignmentCenter);
-  text_layer_set_font(s_conditions_layer, s_date_font);
-  
-  // Create time TextLayer
-  s_time_layer = text_layer_create(GRect(0, 45, 144, 56));
-  text_layer_set_background_color(s_time_layer, GColorClear);
-  text_layer_set_text_color(s_time_layer, GColorWhite);
-  text_layer_set_text_alignment(s_time_layer, GTextAlignmentCenter);
-  text_layer_set_text(s_time_layer, "--:--");
-  text_layer_set_font(s_time_layer, s_time_font);
-  
-  // Create date TextLayer
-  s_date_layer = text_layer_create(GRect(0, 101, 144, 20));
-  text_layer_set_background_color(s_date_layer, GColorClear);
-  text_layer_set_text_color(s_date_layer, GColorWhite);
-  text_layer_set_text_alignment(s_date_layer, GTextAlignmentCenter);
-  text_layer_set_text(s_date_layer, "Wed, September 30");
-  text_layer_set_font(s_date_layer, s_date_font);
-  
-  // Create Location layer
-  s_location_layer = text_layer_create(GRect(0, 119, 144, 20));
-  text_layer_set_background_color(s_location_layer, GColorClear);
-  text_layer_set_text_color(s_location_layer, GColorWhite);
-  text_layer_set_text_alignment(s_location_layer, GTextAlignmentCenter);
-  text_layer_set_font(s_location_layer, s_date_font);
-  
-  // Build window layers
-  layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(s_background_layer));
-  layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(s_conditions_icon_layer));
-  layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_temperature_layer));
-  layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_conditions_layer));
-  layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_time_layer));
-  layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_date_layer));
-  layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_location_layer));
-  
-  // Make sure the time is displayed from the start
-  update_time();
-}
-
-static void main_window_unload(Window *window) {
-  // Unload GFonts
-  fonts_unload_custom_font(s_temperature_font);
-  fonts_unload_custom_font(s_time_font);
-  fonts_unload_custom_font(s_date_font);
-  
-  // Destroy TextLayers
-  text_layer_destroy(s_temperature_layer);
-  text_layer_destroy(s_conditions_layer);
-  text_layer_destroy(s_time_layer);
-  text_layer_destroy(s_date_layer);
-  text_layer_destroy(s_location_layer);
-  
-  // Destroy GBitmaps
-  gbitmap_destroy(s_background_bitmap);
-  gbitmap_destroy(s_conditions_day_clear_bitmap);
-  gbitmap_destroy(s_conditions_night_clear_bitmap);
-  gbitmap_destroy(s_conditions_day_few_clouds_bitmap);
-  gbitmap_destroy(s_conditions_night_few_clouds_bitmap);
-  gbitmap_destroy(s_conditions_clouds_bitmap);
-  gbitmap_destroy(s_conditions_rain_bitmap);
-  gbitmap_destroy(s_conditions_thunderstorm_bitmap);
-  gbitmap_destroy(s_conditions_snow_bitmap);
-  gbitmap_destroy(s_conditions_fog_bitmap);
-  
-  // Destroy BitmapLayers
-  bitmap_layer_destroy(s_conditions_icon_layer);
-  bitmap_layer_destroy(s_background_layer);  
-}
-
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
   update_time();
   
@@ -175,6 +71,141 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
     // send the message!
     app_message_outbox_send();
   }
+}
+
+static void battery_update_proc(Layer *current_layer, GContext* ctx) {
+  GRect rect;
+  rect.origin = GPoint(0, 156);
+  rect.size = GSize((115 * (battery_state.charge_percent / 100)), 12);
+  graphics_context_set_fill_color(ctx, GColorWhite);
+  graphics_fill_rect(ctx, rect, 0, GCornerNone);
+}
+
+static void update_battery() {
+  static char battery_buffer[5];
+  snprintf(battery_buffer, sizeof(battery_buffer), "%d%%", battery_state.charge_percent);
+  text_layer_set_text(s_pebble_battery_layer, battery_buffer);
+  text_layer_set_size(s_pebble_battery_layer, (GSize){ (144 * (battery_state.charge_percent / 100)), 16 });
+  layer_mark_dirty(s_pebble_battery_visual_layer);
+}
+
+static void pebble_battery_handler(BatteryChargeState new_state) {
+  battery_state = new_state;
+  update_battery();
+}
+
+static void set_font_style(TextLayer *current_layer, GFont new_font, GTextAlignment new_alignment, GColor new_background_color, GColor new_color) {
+  text_layer_set_font(current_layer, new_font);
+  text_layer_set_text_alignment(current_layer, new_alignment);
+  text_layer_set_background_color(current_layer, new_background_color);
+  text_layer_set_text_color(current_layer, new_color);
+}
+
+static void main_window_load(Window *window) {
+  Layer *window_layer = window_get_root_layer(window);
+  GRect window_bounds = layer_get_bounds(window_layer);
+  int time_font_height = 51;
+  int date_font_height = 26;
+  int battery_font_height = 16;
+  
+  // Create GFonts
+  s_temperature_font = fonts_get_system_font(FONT_KEY_BITHAM_42_LIGHT);
+  s_time_font = fonts_get_system_font(FONT_KEY_ROBOTO_BOLD_SUBSET_49);
+  s_date_font = fonts_get_system_font(FONT_KEY_GOTHIC_24);
+  s_battery_font = fonts_get_system_font(FONT_KEY_GOTHIC_14);
+  
+  // Create GBitmaps
+  s_background_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_BACKGROUND);
+  s_conditions_day_clear_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_DAY_CLEAR);
+  s_conditions_night_clear_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_NIGHT_CLEAR);
+  s_conditions_day_few_clouds_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_DAY_FEW_CLOUDS);
+  s_conditions_night_few_clouds_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_NIGHT_FEW_CLOUDS);
+  s_conditions_clouds_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_CLOUDS);
+  s_conditions_rain_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_RAIN);
+  s_conditions_thunderstorm_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_THUNDERSTORM);
+  s_conditions_snow_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_SNOW);
+  s_conditions_fog_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_FOG);
+  
+  // Create Background Layer
+  s_background_layer = bitmap_layer_create(GRect(window_bounds.origin.x, window_bounds.origin.x, window_bounds.size.w, window_bounds.size.h));
+  bitmap_layer_set_bitmap(s_background_layer, s_background_bitmap);
+  
+  // Create conditions icon Layer
+  s_conditions_icon_layer = bitmap_layer_create(GRect(3, 3, 42, 42));
+  bitmap_layer_set_alignment(s_conditions_icon_layer, GAlignTop);
+  
+  // Create temperature layer
+  s_temperature_layer = text_layer_create(GRect(48, -4, 96, 44));
+  set_font_style(s_temperature_layer, s_temperature_font, GTextAlignmentRight, GColorClear, GColorWhite);
+  text_layer_set_text(s_temperature_layer, "--°");
+  
+  // Create conditions layer
+  s_conditions_layer = text_layer_create(GRect(window_bounds.origin.x, 36, window_bounds.size.w, date_font_height));
+  set_font_style(s_conditions_layer, s_date_font, GTextAlignmentCenter, GColorClear, GColorWhite);
+  
+  // Create time TextLayer
+  s_time_layer = text_layer_create(GRect(window_bounds.origin.x, 52, window_bounds.size.w, time_font_height));
+  set_font_style(s_time_layer, s_time_font, GTextAlignmentCenter, GColorClear, GColorWhite);
+  
+  // Create date TextLayer
+  s_date_layer = text_layer_create(GRect(window_bounds.origin.x, 96, window_bounds.size.w, date_font_height));
+  set_font_style(s_date_layer, s_date_font, GTextAlignmentCenter, GColorClear, GColorWhite);
+  
+  // Create Location layer
+  s_location_layer = text_layer_create(GRect(window_bounds.origin.x, 114, window_bounds.size.w, date_font_height));
+  set_font_style(s_location_layer, s_date_font, GTextAlignmentCenter, GColorClear, GColorWhite);
+  
+  // Create Pebble battery layer
+  s_pebble_battery_layer = text_layer_create(GRect(window_bounds.origin.x, 152, window_bounds.size.w, battery_font_height));
+  set_font_style(s_pebble_battery_layer, s_battery_font, GTextAlignmentRight, GColorClear, GColorWhite);
+  
+  // Create pebble battery visual layer
+  s_pebble_battery_visual_layer = layer_create(window_bounds);
+  layer_set_update_proc(s_pebble_battery_visual_layer, battery_update_proc);
+  
+  // Build window layers
+  layer_add_child(window_layer, bitmap_layer_get_layer(s_background_layer));
+  layer_add_child(window_layer, bitmap_layer_get_layer(s_conditions_icon_layer));
+  layer_add_child(window_layer, text_layer_get_layer(s_temperature_layer));
+  layer_add_child(window_layer, text_layer_get_layer(s_conditions_layer));
+  layer_add_child(window_layer, text_layer_get_layer(s_time_layer));
+  layer_add_child(window_layer, text_layer_get_layer(s_date_layer));
+  layer_add_child(window_layer, text_layer_get_layer(s_location_layer));
+  layer_add_child(window_layer, text_layer_get_layer(s_pebble_battery_layer));
+  layer_add_child(window_layer, s_pebble_battery_visual_layer);
+  
+  battery_state = battery_state_service_peek();
+  update_time();
+  update_battery();
+}
+
+static void main_window_unload(Window *window) {
+  // Destroy GBitmaps
+  gbitmap_destroy(s_background_bitmap);
+  gbitmap_destroy(s_conditions_day_clear_bitmap);
+  gbitmap_destroy(s_conditions_night_clear_bitmap);
+  gbitmap_destroy(s_conditions_day_few_clouds_bitmap);
+  gbitmap_destroy(s_conditions_night_few_clouds_bitmap);
+  gbitmap_destroy(s_conditions_clouds_bitmap);
+  gbitmap_destroy(s_conditions_rain_bitmap);
+  gbitmap_destroy(s_conditions_thunderstorm_bitmap);
+  gbitmap_destroy(s_conditions_snow_bitmap);
+  gbitmap_destroy(s_conditions_fog_bitmap);
+  
+  // Destroy BitmapLayers
+  bitmap_layer_destroy(s_background_layer);
+  bitmap_layer_destroy(s_conditions_icon_layer);
+  
+  // Destroy TextLayers
+  text_layer_destroy(s_temperature_layer);
+  text_layer_destroy(s_conditions_layer);
+  text_layer_destroy(s_time_layer);
+  text_layer_destroy(s_date_layer);
+  text_layer_destroy(s_location_layer);
+  text_layer_destroy(s_pebble_battery_layer);
+  
+  // Destroy Drawing layers
+  layer_destroy(s_pebble_battery_visual_layer);
 }
 
 static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
@@ -276,6 +307,9 @@ static void init() {
   
   // Register with TickTimerService
   tick_timer_service_subscribe(MINUTE_UNIT, tick_handler);
+  
+  // Register with BatteryStateService
+  battery_state_service_subscribe(pebble_battery_handler);
   
   // Register callbacks
   app_message_register_inbox_received(inbox_received_callback);

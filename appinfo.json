@@ -59,26 +59,6 @@
                 "type": "png"
             },
             {
-                "file": "fonts/Inconsolata-Bold.ttf",
-                "name": "FONT_INCONSOLATA_BOLD_54",
-                "type": "font"
-            },
-            {
-                "file": "fonts/Inconsolata-Regular.ttf",
-                "name": "FONT_INCONSOLATA_48",
-                "type": "font"
-            },
-            {
-                "file": "fonts/Inconsolata-Regular.ttf",
-                "name": "FONT_INCONSOLATA_54",
-                "type": "font"
-            },
-            {
-                "file": "fonts/Inconsolata-Regular.ttf",
-                "name": "FONT_INCONSOLATA_16",
-                "type": "font"
-            },
-            {
                 "file": "images/background_black.png",
                 "name": "IMAGE_BACKGROUND",
                 "type": "png"
