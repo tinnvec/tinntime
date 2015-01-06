@@ -4,9 +4,10 @@
 #define KEY_CONDITIONS_ICON 1
 #define KEY_CONDITIONS 2
 #define KEY_LOCATION 3
+#define KEY_INVERT 4
   
 static Window *s_main_window;
-static BitmapLayer *s_background_layer;
+
 static BitmapLayer *s_conditions_icon_layer;
 static TextLayer *s_temperature_layer;
 static TextLayer *s_conditions_layer;
@@ -14,12 +15,15 @@ static TextLayer *s_time_layer;
 static TextLayer *s_date_layer;
 static TextLayer *s_location_layer;
 static TextLayer *s_pebble_battery_layer;
+static Layer *s_background_layer;
 static Layer *s_pebble_battery_visual_layer;
+static InverterLayer *s_inversion_layer;
+
 static GFont s_temperature_font;
 static GFont s_time_font;
 static GFont s_date_font;
 static GFont s_battery_font;
-static GBitmap *s_background_bitmap;
+
 static GBitmap *s_conditions_day_clear_bitmap;
 static GBitmap *s_conditions_night_clear_bitmap;
 static GBitmap *s_conditions_day_few_clouds_bitmap;
@@ -29,6 +33,7 @@ static GBitmap *s_conditions_rain_bitmap;
 static GBitmap *s_conditions_thunderstorm_bitmap;
 static GBitmap *s_conditions_snow_bitmap;
 static GBitmap *s_conditions_fog_bitmap;
+
 BatteryChargeState battery_state;
 
 static void update_time() {
@@ -48,7 +53,6 @@ static void update_time() {
     // Use 12 hour format
     strftime(time_buffer, sizeof("--:--"), "%I:%M", tick_time);
   }
-  
   strftime(date_buffer, sizeof("Wed, September 30"), "%a, %B %e", tick_time);
   
   // Display the time on the TextLayer
@@ -64,28 +68,34 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
     // Begin dictionary
     DictionaryIterator *iter;
     app_message_outbox_begin(&iter);
-    
     // Add a key-value pair
-    dict_write_uint8(iter, 0, 0);
-    
+    dict_write_cstring(iter, 0x0000000, "Weather Update");
     // send the message!
     app_message_outbox_send();
   }
 }
 
-static void battery_update_proc(Layer *current_layer, GContext* ctx) {
+static void background_update_proc(Layer *current_layer, GContext *ctx) {
+  GRect rect;
+  rect.origin = GPoint(0, 0);
+  rect.size = GSize(144, 168);
+  graphics_context_set_fill_color(ctx, GColorBlack);
+  graphics_fill_rect(ctx, rect, 0, GCornerNone);
+}
+
+static void battery_update_proc(Layer *current_layer, GContext *ctx) {
   GRect rect;
   rect.origin = GPoint(0, 156);
-  rect.size = GSize((115 * (battery_state.charge_percent / 100)), 12);
+  rect.size = GSize((int)(115 * ((double)battery_state.charge_percent / 100)), 12);
   graphics_context_set_fill_color(ctx, GColorWhite);
   graphics_fill_rect(ctx, rect, 0, GCornerNone);
 }
 
 static void update_battery() {
-  static char battery_buffer[5];
+  static char battery_buffer[] = "100%";
+  text_layer_set_size(s_pebble_battery_layer, GSize(((int)(115 * ((double)battery_state.charge_percent / 100)) + 29), 16));
   snprintf(battery_buffer, sizeof(battery_buffer), "%d%%", battery_state.charge_percent);
   text_layer_set_text(s_pebble_battery_layer, battery_buffer);
-  text_layer_set_size(s_pebble_battery_layer, (GSize){ (144 * (battery_state.charge_percent / 100)), 16 });
   layer_mark_dirty(s_pebble_battery_visual_layer);
 }
 
@@ -105,8 +115,7 @@ static void main_window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
   GRect window_bounds = layer_get_bounds(window_layer);
   int time_font_height = 51;
-  int date_font_height = 26;
-  int battery_font_height = 16;
+  int date_font_height = 28;
   
   // Create GFonts
   s_temperature_font = fonts_get_system_font(FONT_KEY_BITHAM_42_LIGHT);
@@ -115,7 +124,6 @@ static void main_window_load(Window *window) {
   s_battery_font = fonts_get_system_font(FONT_KEY_GOTHIC_14);
   
   // Create GBitmaps
-  s_background_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_BACKGROUND);
   s_conditions_day_clear_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_DAY_CLEAR);
   s_conditions_night_clear_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_NIGHT_CLEAR);
   s_conditions_day_few_clouds_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_DAY_FEW_CLOUDS);
@@ -127,8 +135,8 @@ static void main_window_load(Window *window) {
   s_conditions_fog_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_FOG);
   
   // Create Background Layer
-  s_background_layer = bitmap_layer_create(GRect(window_bounds.origin.x, window_bounds.origin.x, window_bounds.size.w, window_bounds.size.h));
-  bitmap_layer_set_bitmap(s_background_layer, s_background_bitmap);
+  s_background_layer = layer_create(window_bounds);
+  layer_set_update_proc(s_background_layer, background_update_proc);
   
   // Create conditions icon Layer
   s_conditions_icon_layer = bitmap_layer_create(GRect(3, 3, 42, 42));
@@ -140,31 +148,38 @@ static void main_window_load(Window *window) {
   text_layer_set_text(s_temperature_layer, "--°");
   
   // Create conditions layer
-  s_conditions_layer = text_layer_create(GRect(window_bounds.origin.x, 36, window_bounds.size.w, date_font_height));
+  s_conditions_layer = text_layer_create(GRect(window_bounds.origin.x, 37, window_bounds.size.w, date_font_height));
   set_font_style(s_conditions_layer, s_date_font, GTextAlignmentCenter, GColorClear, GColorWhite);
   
   // Create time TextLayer
-  s_time_layer = text_layer_create(GRect(window_bounds.origin.x, 52, window_bounds.size.w, time_font_height));
+  s_time_layer = text_layer_create(GRect(window_bounds.origin.x, 55, window_bounds.size.w, time_font_height));
   set_font_style(s_time_layer, s_time_font, GTextAlignmentCenter, GColorClear, GColorWhite);
   
   // Create date TextLayer
-  s_date_layer = text_layer_create(GRect(window_bounds.origin.x, 96, window_bounds.size.w, date_font_height));
+  s_date_layer = text_layer_create(GRect(window_bounds.origin.x, 99, window_bounds.size.w, date_font_height));
   set_font_style(s_date_layer, s_date_font, GTextAlignmentCenter, GColorClear, GColorWhite);
   
   // Create Location layer
-  s_location_layer = text_layer_create(GRect(window_bounds.origin.x, 114, window_bounds.size.w, date_font_height));
+  s_location_layer = text_layer_create(GRect(window_bounds.origin.x, 119, window_bounds.size.w, date_font_height));
   set_font_style(s_location_layer, s_date_font, GTextAlignmentCenter, GColorClear, GColorWhite);
   
   // Create Pebble battery layer
-  s_pebble_battery_layer = text_layer_create(GRect(window_bounds.origin.x, 152, window_bounds.size.w, battery_font_height));
+  s_pebble_battery_layer = text_layer_create(GRect(window_bounds.origin.x, 152, 0, 16));
   set_font_style(s_pebble_battery_layer, s_battery_font, GTextAlignmentRight, GColorClear, GColorWhite);
   
   // Create pebble battery visual layer
   s_pebble_battery_visual_layer = layer_create(window_bounds);
   layer_set_update_proc(s_pebble_battery_visual_layer, battery_update_proc);
   
+  // Create inversion layer
+  s_inversion_layer = inverter_layer_create(window_bounds);
+  //Check for saved option
+  if(persist_read_bool(KEY_INVERT) == false) {
+    layer_set_hidden((Layer*)s_inversion_layer, true);
+  }
+  
   // Build window layers
-  layer_add_child(window_layer, bitmap_layer_get_layer(s_background_layer));
+  layer_add_child(window_layer, s_background_layer);
   layer_add_child(window_layer, bitmap_layer_get_layer(s_conditions_icon_layer));
   layer_add_child(window_layer, text_layer_get_layer(s_temperature_layer));
   layer_add_child(window_layer, text_layer_get_layer(s_conditions_layer));
@@ -173,6 +188,7 @@ static void main_window_load(Window *window) {
   layer_add_child(window_layer, text_layer_get_layer(s_location_layer));
   layer_add_child(window_layer, text_layer_get_layer(s_pebble_battery_layer));
   layer_add_child(window_layer, s_pebble_battery_visual_layer);
+  layer_add_child(window_layer, (Layer*)s_inversion_layer);
   
   battery_state = battery_state_service_peek();
   update_time();
@@ -181,7 +197,6 @@ static void main_window_load(Window *window) {
 
 static void main_window_unload(Window *window) {
   // Destroy GBitmaps
-  gbitmap_destroy(s_background_bitmap);
   gbitmap_destroy(s_conditions_day_clear_bitmap);
   gbitmap_destroy(s_conditions_night_clear_bitmap);
   gbitmap_destroy(s_conditions_day_few_clouds_bitmap);
@@ -193,7 +208,6 @@ static void main_window_unload(Window *window) {
   gbitmap_destroy(s_conditions_fog_bitmap);
   
   // Destroy BitmapLayers
-  bitmap_layer_destroy(s_background_layer);
   bitmap_layer_destroy(s_conditions_icon_layer);
   
   // Destroy TextLayers
@@ -205,12 +219,16 @@ static void main_window_unload(Window *window) {
   text_layer_destroy(s_pebble_battery_layer);
   
   // Destroy Drawing layers
+  layer_destroy(s_background_layer);
   layer_destroy(s_pebble_battery_visual_layer);
+  
+  // Destroy inversion layer
+  inverter_layer_destroy(s_inversion_layer);
 }
 
 static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
   // store incoming information
-  static char temperature_buffer[8];
+  static char temperature_buffer[] = "100°";
   static char conditions_buffer[64];
   static char location_buffer[64];
   static GBitmap *icon;
@@ -226,32 +244,32 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
         snprintf(temperature_buffer, sizeof(temperature_buffer), "%i%s", (int)t->value->int32, "°");
         break;
       case KEY_CONDITIONS_ICON:
-        if (strcmp(t->value->cstring, "01d") == 0) {
+        if(strcmp(t->value->cstring, "01d") == 0) {
           icon = s_conditions_day_clear_bitmap; // Day Clear
-        } else if (strcmp(t->value->cstring, "01n") == 0) {
+        } else if(strcmp(t->value->cstring, "01n") == 0) {
           icon = s_conditions_night_clear_bitmap; // Night Clear
-        } else if (strcmp(t->value->cstring, "02d") == 0) {
+        } else if(strcmp(t->value->cstring, "02d") == 0) {
           icon =  s_conditions_day_few_clouds_bitmap; // Few Clouds Day
-        } else if (strcmp(t->value->cstring, "02n") == 0) {
+        } else if(strcmp(t->value->cstring, "02n") == 0) {
           icon =  s_conditions_night_few_clouds_bitmap; // Few Clouds Night
-        } else if (strcmp(t->value->cstring, "03d") == 0 ||
-                   strcmp(t->value->cstring, "03n") == 0 ||
-                   strcmp(t->value->cstring, "04d") == 0 ||
-                   strcmp(t->value->cstring, "04n") == 0) {
+        } else if(strcmp(t->value->cstring, "03d") == 0 ||
+                  strcmp(t->value->cstring, "03n") == 0 ||
+                  strcmp(t->value->cstring, "04d") == 0 ||
+                  strcmp(t->value->cstring, "04n") == 0) {
           icon = s_conditions_clouds_bitmap; // Clouds Day/Night
-        } else if (strcmp(t->value->cstring, "09d") == 0 ||
-                   strcmp(t->value->cstring, "09n") == 0 ||
-                   strcmp(t->value->cstring, "10d") == 0 ||
-                   strcmp(t->value->cstring, "10n") == 0) {
+        } else if(strcmp(t->value->cstring, "09d") == 0 ||
+                  strcmp(t->value->cstring, "09n") == 0 ||
+                  strcmp(t->value->cstring, "10d") == 0 ||
+                  strcmp(t->value->cstring, "10n") == 0) {
           icon = s_conditions_rain_bitmap; // Rain Day/Night
-        } else if (strcmp(t->value->cstring, "11d") == 0 ||
-                   strcmp(t->value->cstring, "11n") == 0) {
+        } else if(strcmp(t->value->cstring, "11d") == 0 ||
+                  strcmp(t->value->cstring, "11n") == 0) {
           icon = s_conditions_thunderstorm_bitmap; // Thunderstorm Day/Night
-        } else if (strcmp(t->value->cstring, "13d") == 0 ||
-                   strcmp(t->value->cstring, "13n") == 0) {
+        } else if(strcmp(t->value->cstring, "13d") == 0 ||
+                  strcmp(t->value->cstring, "13n") == 0) {
           icon = s_conditions_snow_bitmap; // Snow Day/Night
-        } else if (strcmp(t->value->cstring, "50d") == 0 ||
-                   strcmp(t->value->cstring, "50n") == 0) {
+        } else if(strcmp(t->value->cstring, "50d") == 0 ||
+                  strcmp(t->value->cstring, "50n") == 0) {
           icon = s_conditions_fog_bitmap; // Mist Day/Night
         } else {
           icon = NULL; // Unknown
@@ -263,18 +281,26 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
       case KEY_LOCATION:
         snprintf(location_buffer, sizeof(conditions_buffer), "%s", t->value->cstring);
         break;
+      case KEY_INVERT:
+        if(strcmp(t->value->cstring, "yes") == 0) {
+          //Set and save as inverted
+          layer_set_hidden((Layer*)s_inversion_layer, false);
+          persist_write_bool(KEY_INVERT, true);
+        } else if(strcmp(t->value->cstring, "no") == 0) {
+          //Set and save as not inverted
+          layer_set_hidden((Layer*)s_inversion_layer, true);
+          persist_write_bool(KEY_INVERT, false);
+        }
+        break;
       default:
         APP_LOG(APP_LOG_LEVEL_ERROR, "Key %d not recognized!", (int)t->key);
         break;
     }
-    
     // Look for next item
     t = dict_read_next(iterator);
   }
   
   bitmap_layer_set_bitmap(s_conditions_icon_layer, icon);
-  
-  // Assemble full string and display
   text_layer_set_text(s_temperature_layer, temperature_buffer);
   text_layer_set_text(s_conditions_layer, conditions_buffer);
   text_layer_set_text(s_location_layer, location_buffer);
