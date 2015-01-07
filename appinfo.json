@@ -4,7 +4,8 @@
         "KEY_CONDITIONS_ICON": 1,
         "KEY_INVERT": 4,
         "KEY_LOCATION": 3,
-        "KEY_TEMPERATURE": 0
+        "KEY_TEMPERATURE": 0,
+        "KEY_UPDATE": 5
     },
     "capabilities": [
         "location",

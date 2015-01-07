@@ -95,7 +95,8 @@ Pebble.addEventListener('ready', function(e) {
       "invert": "yes",
       "temp": "f",
       "gps": "yes",
-      "zipcode": "000000"
+      "zipcode": "000000",
+      "update": "30"
     };
     window.localStorage.tinntime_config = JSON.stringify(configuration);
   }
@@ -134,6 +135,7 @@ Pebble.addEventListener('webviewclosed', function(e) {
   
   var dictionary = {
     "KEY_INVERT": configuration.invert,
+    "KEY_UPDATE": configuration.update
   };
   
   //Send to Pebble, persist there

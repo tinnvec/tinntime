@@ -5,6 +5,7 @@
 #define KEY_CONDITIONS 2
 #define KEY_LOCATION 3
 #define KEY_INVERT 4
+#define KEY_UPDATE 5
   
 static Window *s_main_window;
 
@@ -64,7 +65,7 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
   update_time();
   
   // Get weather update every 30 minutes
-  if(tick_time->tm_min % 30 == 0) {
+  if(tick_time->tm_min % persist_read_int(KEY_UPDATE) == 0) {
     // Begin dictionary
     DictionaryIterator *iter;
     app_message_outbox_begin(&iter);
@@ -291,6 +292,10 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
           layer_set_hidden((Layer*)s_inversion_layer, true);
           persist_write_bool(KEY_INVERT, false);
         }
+        break;
+      case KEY_UPDATE:
+        persist_write_int(KEY_UPDATE, (int)t->value->int32);
+        // APP_LOG(APP_LOG_LEVEL_INFO, "Update Frequency: %i minutes", persist_read_int(KEY_UPDATE));
         break;
       default:
         APP_LOG(APP_LOG_LEVEL_ERROR, "Key %d not recognized!", (int)t->key);
