@@ -70,7 +70,7 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
     DictionaryIterator *iter;
     app_message_outbox_begin(&iter);
     // Add a key-value pair
-    dict_write_cstring(iter, 0x0000000, "Weather Update");
+    dict_write_uint8(iter, 0, 0);
     // send the message!
     app_message_outbox_send();
   }
@@ -294,8 +294,8 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
         }
         break;
       case KEY_UPDATE:
-        persist_write_int(KEY_UPDATE, (int)t->value->int32);
-        // APP_LOG(APP_LOG_LEVEL_INFO, "Update Frequency: %i minutes", persist_read_int(KEY_UPDATE));
+        persist_write_int(KEY_UPDATE, atoi(t->value->cstring));
+        APP_LOG(APP_LOG_LEVEL_INFO, "Update Frequency: %d minutes", (int)persist_read_int(KEY_UPDATE));
         break;
       default:
         APP_LOG(APP_LOG_LEVEL_ERROR, "Key %d not recognized!", (int)t->key);
