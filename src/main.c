@@ -210,31 +210,6 @@ static void outbox_sent_callback(DictionaryIterator *iterator, void *context) {
   APP_LOG(APP_LOG_LEVEL_INFO, "Outbox send success!");
 }
 
-static void init() {
-  // Create main Window element and assign to pointer
-  s_main_window = window_create();
-
-  // Set handlers to manage the elements inside the Window
-  window_set_window_handlers(s_main_window, (WindowHandlers) {
-    .load = main_window_load,
-    .unload = main_window_unload
-  });
-
-  // Show the Window on the watch, with animated=true
-  window_stack_push(s_main_window, true);
-
-  // Register with services
-  tick_timer_service_subscribe(MINUTE_UNIT, tick_handler);
-  battery_state_service_subscribe(pebble_battery_handler);
-
-  // Register callbacks
-  app_message_register_inbox_received(inbox_received_callback);
-  app_message_open(app_message_inbox_size_maximum(), app_message_outbox_size_maximum());
-  app_message_register_inbox_dropped(inbox_dropped_callback);
-  app_message_register_outbox_failed(outbox_failed_callback);
-  app_message_register_outbox_sent(outbox_sent_callback);
-}
-
 static void main_window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
   GRect window_bounds = layer_get_bounds(window_layer);
@@ -319,11 +294,6 @@ static void main_window_load(Window *window) {
   update_battery();
 }
 
-static void deinit() {
-  // Destroy Window
-  window_destroy(s_main_window);
-}
-
 static void main_window_unload(Window *window) {
   // Destroy GBitmaps
   gbitmap_destroy(s_conditions_day_clear_bitmap);
@@ -353,6 +323,36 @@ static void main_window_unload(Window *window) {
 
   // Destroy inversion layer
   inverter_layer_destroy(s_inversion_layer);
+}
+
+static void init() {
+  // Create main Window element and assign to pointer
+  s_main_window = window_create();
+
+  // Set handlers to manage the elements inside the Window
+  window_set_window_handlers(s_main_window, (WindowHandlers) {
+    .load = main_window_load,
+    .unload = main_window_unload
+  });
+
+  // Show the Window on the watch, with animated=true
+  window_stack_push(s_main_window, true);
+
+  // Register with services
+  tick_timer_service_subscribe(MINUTE_UNIT, tick_handler);
+  battery_state_service_subscribe(pebble_battery_handler);
+
+  // Register callbacks
+  app_message_register_inbox_received(inbox_received_callback);
+  app_message_open(app_message_inbox_size_maximum(), app_message_outbox_size_maximum());
+  app_message_register_inbox_dropped(inbox_dropped_callback);
+  app_message_register_outbox_failed(outbox_failed_callback);
+  app_message_register_outbox_sent(outbox_sent_callback);
+}
+
+static void deinit() {
+  // Destroy Window
+  window_destroy(s_main_window);
 }
 
 int main(void) {
