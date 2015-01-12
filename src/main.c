@@ -115,59 +115,68 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
 }
 
 static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
-  // store incoming information
-  static char temperature_buffer[] = "100°";
-  static char conditions_buffer[64];
-  static char location_buffer[64];
-  static GBitmap *icon;
-
-  // Read first item
   Tuple *t = dict_read_first(iterator);
-
-  // For all items
   while(t != NULL) {
-    // Which key was received?
     switch(t->key) {
       case KEY_TEMPERATURE:
+        static char temperature_buffer[] = "100°";
         snprintf(temperature_buffer, sizeof(temperature_buffer), "%i%s", (int)t->value->int32, "°");
+        text_layer_set_text(s_temperature_layer, temperature_buffer);
         break;
       case KEY_CONDITIONS_ICON:
+        static GBitmap *icon;
+        static char icon_log_prefix[] = "Weather icon is";
         if(strcmp(t->value->cstring, "01d") == 0) {
           icon = s_conditions_day_clear_bitmap; // Day Clear
+          APP_LOG(APP_LOG_LEVEL_INFO, "%d Day Clear", icon_log_prefix);
         } else if(strcmp(t->value->cstring, "01n") == 0) {
           icon = s_conditions_night_clear_bitmap; // Night Clear
+          APP_LOG(APP_LOG_LEVEL_INFO, "%d Night Clear", icon_log_prefix);
         } else if(strcmp(t->value->cstring, "02d") == 0) {
           icon =  s_conditions_day_few_clouds_bitmap; // Few Clouds Day
+          APP_LOG(APP_LOG_LEVEL_INFO, "%d Few Clouds Day", icon_log_prefix);
         } else if(strcmp(t->value->cstring, "02n") == 0) {
           icon =  s_conditions_night_few_clouds_bitmap; // Few Clouds Night
+          APP_LOG(APP_LOG_LEVEL_INFO, "%d Few Clouds Night", icon_log_prefix);
         } else if(strcmp(t->value->cstring, "03d") == 0 ||
                   strcmp(t->value->cstring, "03n") == 0 ||
                   strcmp(t->value->cstring, "04d") == 0 ||
                   strcmp(t->value->cstring, "04n") == 0) {
           icon = s_conditions_clouds_bitmap; // Clouds Day/Night
+          APP_LOG(APP_LOG_LEVEL_INFO, "%d Clouds Day/Night", icon_log_prefix);
         } else if(strcmp(t->value->cstring, "09d") == 0 ||
                   strcmp(t->value->cstring, "09n") == 0 ||
                   strcmp(t->value->cstring, "10d") == 0 ||
                   strcmp(t->value->cstring, "10n") == 0) {
           icon = s_conditions_rain_bitmap; // Rain Day/Night
+          APP_LOG(APP_LOG_LEVEL_INFO, "%d Rain Day/Night", icon_log_prefix);
         } else if(strcmp(t->value->cstring, "11d") == 0 ||
                   strcmp(t->value->cstring, "11n") == 0) {
           icon = s_conditions_thunderstorm_bitmap; // Thunderstorm Day/Night
+          APP_LOG(APP_LOG_LEVEL_INFO, "%d Thunderstorm Day/Night", icon_log_prefix);
         } else if(strcmp(t->value->cstring, "13d") == 0 ||
                   strcmp(t->value->cstring, "13n") == 0) {
           icon = s_conditions_snow_bitmap; // Snow Day/Night
+          APP_LOG(APP_LOG_LEVEL_INFO, "%d Snow Day/Night", icon_log_prefix);
         } else if(strcmp(t->value->cstring, "50d") == 0 ||
                   strcmp(t->value->cstring, "50n") == 0) {
           icon = s_conditions_fog_bitmap; // Mist Day/Night
+          APP_LOG(APP_LOG_LEVEL_INFO, "%d Mist Day/Night", icon_log_prefix);
         } else {
           icon = NULL; // Unknown
+          APP_LOG(APP_LOG_LEVEL_INFO, "%d Unknown", icon_log_prefix);
         }
+        bitmap_layer_set_bitmap(s_conditions_icon_layer, icon);
         break;
       case KEY_CONDITIONS:
+        static char conditions_buffer[64];
         snprintf(conditions_buffer, sizeof(conditions_buffer), "%s", t->value->cstring);
+        text_layer_set_text(s_conditions_layer, conditions_buffer);
         break;
       case KEY_LOCATION:
+        static char location_buffer[64];
         snprintf(location_buffer, sizeof(conditions_buffer), "%s", t->value->cstring);
+        text_layer_set_text(s_location_layer, location_buffer);
         break;
       case KEY_INVERT:
         if(strcmp(t->value->cstring, "yes") == 0) {
@@ -191,19 +200,10 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     // Look for next item
     t = dict_read_next(iterator);
   }
-
-  bitmap_layer_set_bitmap(s_conditions_icon_layer, icon);
-  text_layer_set_text(s_temperature_layer, temperature_buffer);
-  text_layer_set_text(s_conditions_layer, conditions_buffer);
-  text_layer_set_text(s_location_layer, location_buffer);
 }
 
 static void inbox_dropped_callback(AppMessageResult reason, void *context) {
   APP_LOG(APP_LOG_LEVEL_ERROR, "Message dropped!");
-}
-
-static void outbox_failed_callback(DictionaryIterator *iterator, AppMessageResult reason, void *context) {
-  APP_LOG(APP_LOG_LEVEL_ERROR, "Outbox send failed!");
 }
 
 static void outbox_sent_callback(DictionaryIterator *iterator, void *context) {
@@ -211,18 +211,15 @@ static void outbox_sent_callback(DictionaryIterator *iterator, void *context) {
 }
 
 static void main_window_load(Window *window) {
+  // Create Background Layer
   Layer *window_layer = window_get_root_layer(window);
   GRect window_bounds = layer_get_bounds(window_layer);
-  int time_font_height = 51;
-  int date_font_height = 28;
+  window_layer = NULL;
+  s_background_layer = layer_create(window_bounds);
+  layer_set_update_proc(s_background_layer, background_update_proc);
+  layer_add_child(window_layer, s_background_layer);
 
-  // Create GFonts
-  s_temperature_font = fonts_get_system_font(FONT_KEY_BITHAM_42_LIGHT);
-  s_time_font = fonts_get_system_font(FONT_KEY_ROBOTO_BOLD_SUBSET_49);
-  s_date_font = fonts_get_system_font(FONT_KEY_GOTHIC_24);
-  s_battery_font = fonts_get_system_font(FONT_KEY_GOTHIC_14);
-
-  // Create GBitmaps
+  // Create conditions icon Layer
   s_conditions_day_clear_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_DAY_CLEAR);
   s_conditions_night_clear_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_NIGHT_CLEAR);
   s_conditions_day_few_clouds_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_DAY_FEW_CLOUDS);
@@ -232,97 +229,116 @@ static void main_window_load(Window *window) {
   s_conditions_thunderstorm_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_THUNDERSTORM);
   s_conditions_snow_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_SNOW);
   s_conditions_fog_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_FOG);
-
-  // Create Background Layer
-  s_background_layer = layer_create(window_bounds);
-  layer_set_update_proc(s_background_layer, background_update_proc);
-
-  // Create conditions icon Layer
   s_conditions_icon_layer = bitmap_layer_create(GRect(3, 3, 42, 42));
   bitmap_layer_set_alignment(s_conditions_icon_layer, GAlignTop);
+  layer_add_child(window_layer, bitmap_layer_get_layer(s_conditions_icon_layer));
 
   // Create temperature layer
+  s_temperature_font = fonts_get_system_font(FONT_KEY_BITHAM_42_LIGHT);
   s_temperature_layer = text_layer_create(GRect(48, -4, 96, 44));
   set_font_style(s_temperature_layer, s_temperature_font, GTextAlignmentRight, GColorClear, GColorWhite);
   text_layer_set_text(s_temperature_layer, "--°");
+  layer_add_child(window_layer, text_layer_get_layer(s_temperature_layer));
 
   // Create conditions layer
+  int date_font_height = 28;
+  s_date_font = fonts_get_system_font(FONT_KEY_GOTHIC_24);
   s_conditions_layer = text_layer_create(GRect(window_bounds.origin.x, 37, window_bounds.size.w, date_font_height));
   set_font_style(s_conditions_layer, s_date_font, GTextAlignmentCenter, GColorClear, GColorWhite);
+  layer_add_child(window_layer, text_layer_get_layer(s_conditions_layer));
 
   // Create time TextLayer
-  s_time_layer = text_layer_create(GRect(window_bounds.origin.x, 55, window_bounds.size.w, time_font_height));
+  s_time_font = fonts_get_system_font(FONT_KEY_ROBOTO_BOLD_SUBSET_49);
+  s_time_layer = text_layer_create(GRect(window_bounds.origin.x, 55, window_bounds.size.w, 51));
   set_font_style(s_time_layer, s_time_font, GTextAlignmentCenter, GColorClear, GColorWhite);
+  layer_add_child(window_layer, text_layer_get_layer(s_time_layer));
 
   // Create date TextLayer
   s_date_layer = text_layer_create(GRect(window_bounds.origin.x, 99, window_bounds.size.w, date_font_height));
   set_font_style(s_date_layer, s_date_font, GTextAlignmentCenter, GColorClear, GColorWhite);
+  layer_add_child(window_layer, text_layer_get_layer(s_date_layer));
 
   // Create Location layer
   s_location_layer = text_layer_create(GRect(window_bounds.origin.x, 119, window_bounds.size.w, date_font_height));
   set_font_style(s_location_layer, s_date_font, GTextAlignmentCenter, GColorClear, GColorWhite);
-
-  // Create Pebble battery layer
-  s_pebble_battery_layer = text_layer_create(GRect(window_bounds.origin.x, 152, 0, 16));
-  set_font_style(s_pebble_battery_layer, s_battery_font, GTextAlignmentRight, GColorClear, GColorWhite);
+  layer_add_child(window_layer, text_layer_get_layer(s_location_layer));
+  update_time();
 
   // Create pebble battery visual layer
+  battery_state = battery_state_service_peek();
   s_pebble_battery_visual_layer = layer_create(window_bounds);
   layer_set_update_proc(s_pebble_battery_visual_layer, battery_update_proc);
+  layer_add_child(window_layer, s_pebble_battery_visual_layer);
+
+  // Create Pebble battery layer
+  s_battery_font = fonts_get_system_font(FONT_KEY_GOTHIC_14);
+  s_pebble_battery_layer = text_layer_create(GRect(window_bounds.origin.x, 152, 0, 16));
+  set_font_style(s_pebble_battery_layer, s_battery_font, GTextAlignmentRight, GColorClear, GColorWhite);
+  layer_add_child(window_layer, text_layer_get_layer(s_pebble_battery_layer));
+  update_battery();
 
   // Create inversion layer
   s_inversion_layer = inverter_layer_create(window_bounds);
-  //Check for saved option
   if(persist_read_bool(KEY_INVERT) == false) {
     layer_set_hidden((Layer*)s_inversion_layer, true);
   }
-
-  // Build window layers
-  layer_add_child(window_layer, s_background_layer);
-  layer_add_child(window_layer, bitmap_layer_get_layer(s_conditions_icon_layer));
-  layer_add_child(window_layer, text_layer_get_layer(s_temperature_layer));
-  layer_add_child(window_layer, text_layer_get_layer(s_conditions_layer));
-  layer_add_child(window_layer, text_layer_get_layer(s_time_layer));
-  layer_add_child(window_layer, text_layer_get_layer(s_date_layer));
-  layer_add_child(window_layer, text_layer_get_layer(s_location_layer));
-  layer_add_child(window_layer, text_layer_get_layer(s_pebble_battery_layer));
-  layer_add_child(window_layer, s_pebble_battery_visual_layer);
   layer_add_child(window_layer, (Layer*)s_inversion_layer);
-
-  battery_state = battery_state_service_peek();
-  update_time();
-  update_battery();
 }
 
 static void main_window_unload(Window *window) {
-  // Destroy GBitmaps
-  gbitmap_destroy(s_conditions_day_clear_bitmap);
-  gbitmap_destroy(s_conditions_night_clear_bitmap);
-  gbitmap_destroy(s_conditions_day_few_clouds_bitmap);
-  gbitmap_destroy(s_conditions_night_few_clouds_bitmap);
-  gbitmap_destroy(s_conditions_clouds_bitmap);
-  gbitmap_destroy(s_conditions_rain_bitmap);
-  gbitmap_destroy(s_conditions_thunderstorm_bitmap);
-  gbitmap_destroy(s_conditions_snow_bitmap);
-  gbitmap_destroy(s_conditions_fog_bitmap);
+  tick_timer_service_unsubscribe();
+  bluetooth_connection_service_unsubscribe();
+  battery_state_service_unsubscribe();
 
-  // Destroy BitmapLayers
-  bitmap_layer_destroy(s_conditions_icon_layer);
+  layer_remove_from_parent(inverter_layer_get_layer(s_inversion_layer));
+  inverter_layer_destroy(s_inversion_layer);
 
-  // Destroy TextLayers
-  text_layer_destroy(s_temperature_layer);
-  text_layer_destroy(s_conditions_layer);
-  text_layer_destroy(s_time_layer);
-  text_layer_destroy(s_date_layer);
-  text_layer_destroy(s_location_layer);
+  layer_remove_from_parent(text_layer_get_layer(s_pebble_battery_layer));
   text_layer_destroy(s_pebble_battery_layer);
 
-  // Destroy Drawing layers
-  layer_destroy(s_background_layer);
+  layer_remove_from_parent(s_pebble_battery_visual_layer);
   layer_destroy(s_pebble_battery_visual_layer);
+  s_pebble_battery_visual_layer = NULL;
 
-  // Destroy inversion layer
-  inverter_layer_destroy(s_inversion_layer);
+  layer_remove_from_parent(text_layer_get_layer(s_location_layer));
+  text_layer_destroy(s_location_layer);
+
+  layer_remove_from_parent(text_layer_get_layer(s_date_layer));
+  text_layer_destroy(s_date_layer);
+
+  layer_remove_from_parent(text_layer_get_layer(s_time_layer));
+  text_layer_destroy(s_time_layer);
+
+  layer_remove_from_parent(text_layer_get_layer(s_conditions_layer));
+  text_layer_destroy(s_conditions_layer);
+
+  layer_remove_from_parent(text_layer_get_layer(s_temperature_layer));
+  text_layer_destroy(s_temperature_layer);
+
+  layer_remove_from_parent(bitmap_layer_get_layer(s_conditions_icon_layer));
+  bitmap_layer_destroy(s_conditions_icon_layer);
+  gbitmap_destroy(s_conditions_day_clear_bitmap);
+  s_conditions_day_clear_bitmap = NULL;
+  gbitmap_destroy(s_conditions_night_clear_bitmap);
+  s_conditions_night_clear_bitmap = NULL;
+  gbitmap_destroy(s_conditions_day_few_clouds_bitmap);
+  s_conditions_day_few_clouds_bitmap = NULL;
+  gbitmap_destroy(s_conditions_night_few_clouds_bitmap);
+  s_conditions_night_few_clouds_bitmap = NULL;
+  gbitmap_destroy(s_conditions_clouds_bitmap);
+  s_conditions_clouds_bitmap = NULL;
+  gbitmap_destroy(s_conditions_rain_bitmap);
+  s_conditions_rain_bitmap = NULL;
+  gbitmap_destroy(s_conditions_thunderstorm_bitmap);
+  s_conditions_thunderstorm_bitmap = NULL;
+  gbitmap_destroy(s_conditions_snow_bitmap);
+  s_conditions_snow_bitmap = NULL;
+  gbitmap_destroy(s_conditions_fog_bitmap);
+  s_conditions_fog_bitmap = NULL;
+
+  layer_remove_from_parent(s_background_layer);
+  layer_destroy(s_background_layer);
+  s_background_layer = NULL;
 }
 
 static void init() {
@@ -351,7 +367,6 @@ static void init() {
 }
 
 static void deinit() {
-  // Destroy Window
   window_destroy(s_main_window);
 }
 
