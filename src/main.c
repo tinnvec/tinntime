@@ -181,33 +181,33 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
       case KEY_CONDITIONS:
         snprintf(conditions_buffer, sizeof(conditions_buffer), "%s", t->value->cstring);
         text_layer_set_text(s_conditions_layer, conditions_buffer);
-        APP_LOG(APP_LOG_LEVEL_INFO, "Conditions: %s", conditions_buffer);
+        // APP_LOG(APP_LOG_LEVEL_INFO, "Conditions: %s", conditions_buffer);
         break;
       case KEY_LOCATION:
         snprintf(location_buffer, sizeof(conditions_buffer), "%s", t->value->cstring);
         text_layer_set_text(s_location_layer, location_buffer);
-        APP_LOG(APP_LOG_LEVEL_INFO, "Location: %s", location_buffer);
+        // APP_LOG(APP_LOG_LEVEL_INFO, "Location: %s", location_buffer);
         break;
       case KEY_INVERT:
         if(strcmp(t->value->cstring, "yes") == 0) {
           //Set and save as inverted
           layer_set_hidden((Layer*)s_inversion_layer, false);
           persist_write_bool(KEY_INVERT, true);
-          APP_LOG(APP_LOG_LEVEL_INFO, "Inverted");
+          // APP_LOG(APP_LOG_LEVEL_INFO, "Inverted");
         } else if(strcmp(t->value->cstring, "no") == 0) {
           //Set and save as not inverted
           layer_set_hidden((Layer*)s_inversion_layer, true);
           persist_write_bool(KEY_INVERT, false);
-          APP_LOG(APP_LOG_LEVEL_INFO, "Not Inverted");
+          // APP_LOG(APP_LOG_LEVEL_INFO, "Not Inverted");
         }
         break;
       case KEY_VIBRATE:
         if(strcmp(t->value->cstring, "yes") == 0) {
           persist_write_bool(KEY_VIBRATE, true);
-          APP_LOG(APP_LOG_LEVEL_INFO, "Bluetooth Vibe On");
+          // APP_LOG(APP_LOG_LEVEL_INFO, "Bluetooth Vibe On");
         } else if(strcmp(t->value->cstring, "no") == 0) {
           persist_write_bool(KEY_VIBRATE, false);
-          APP_LOG(APP_LOG_LEVEL_INFO, "Bluetooth Vibe Off");
+          // APP_LOG(APP_LOG_LEVEL_INFO, "Bluetooth Vibe Off");
         }
         break;
       case KEY_UPDATE:
