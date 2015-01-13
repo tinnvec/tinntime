@@ -96,11 +96,11 @@ static void battery_update_proc(Layer *current_layer, GContext *ctx) {
   graphics_fill_rect(ctx, rect, 0, GCornerNone);
 }
 
-static void bluetooth_connection_handler(bool connected) {
-  if(!connected && persist_write_bool(KEY_VIBRATE)) {
-    vibes_long_pulse();
-  }
-}
+// static void bluetooth_connection_handler(bool connected) {
+//   if(!connected && persist_read_bool(KEY_VIBRATE)) {
+//     vibes_long_pulse();
+//   }
+// }
 
 static void pebble_battery_handler(BatteryChargeState new_state) {
   battery_state = new_state;
@@ -312,7 +312,7 @@ static void main_window_load(Window *window) {
 
 static void main_window_unload(Window *window) {
   tick_timer_service_unsubscribe();
-  bluetooth_connection_service_unsubscribe();
+//   bluetooth_connection_service_unsubscribe();
   battery_state_service_unsubscribe();
 
   layer_remove_from_parent(inverter_layer_get_layer(s_inversion_layer));
@@ -382,7 +382,7 @@ static void init() {
   // Register with services
   tick_timer_service_subscribe(MINUTE_UNIT, tick_handler);
   battery_state_service_subscribe(pebble_battery_handler);
-  bluetooth_connection_service_subscribe(bluetooth_connection_handler);
+//   bluetooth_connection_service_subscribe(bluetooth_connection_handler);
 
   // Register callbacks
   app_message_register_inbox_received(inbox_received_callback);
