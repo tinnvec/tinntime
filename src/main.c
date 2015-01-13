@@ -6,6 +6,7 @@
 #define KEY_LOCATION 3
 #define KEY_INVERT 4
 #define KEY_UPDATE 5
+#define KEY_VIBRATE 6
   
 static Window *s_main_window;
 
@@ -63,14 +64,10 @@ static void update_time() {
 
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
   update_time();
-  // Get weather update every 30 minutes
   if(tick_time->tm_min % (int)persist_read_int(KEY_UPDATE) == 0) {
-    // Begin dictionary
     DictionaryIterator *iter;
     app_message_outbox_begin(&iter);
-    // Add a key-value pair
     dict_write_uint8(iter, 0, 0);
-    // send the message!
     app_message_outbox_send();
   }
 }
@@ -102,6 +99,18 @@ static void update_battery() {
 static void pebble_battery_handler(BatteryChargeState new_state) {
   battery_state = new_state;
   update_battery();
+}
+
+static void bluetooth_connection_handler(bool connected) {
+  if(persist_read_bool(KEY_VIBRATE)) {
+    if(connected) {
+      text_layer_set_text(s_location_layer, "Connected");
+      vibes_short_pulse();
+    } else {
+      text_layer_set_text(s_location_layer, "Disconnected");
+      vibes_long_pulse();
+    }
+  }
 }
 
 static void set_font_style(TextLayer *current_layer, GFont new_font, GTextAlignment new_alignment, GColor new_background_color, GColor new_color) {
@@ -162,6 +171,7 @@ static void main_window_load(Window *window) {
   // Create Location layer
   s_location_layer = text_layer_create(GRect(window_bounds.origin.x, 119, window_bounds.size.w, date_font_height));
   set_font_style(s_location_layer, s_date_font, GTextAlignmentCenter, GColorClear, GColorWhite);
+  text_layer_set_text(s_location_layer, "Loading");
   
   // Create Pebble battery layer
   s_pebble_battery_layer = text_layer_create(GRect(window_bounds.origin.x, 152, 0, 16));
@@ -292,6 +302,15 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
           persist_write_bool(KEY_INVERT, false);
         }
         break;
+      case KEY_VIBRATE:
+        if(strcmp(t->value->cstring, "yes") == 0) {
+          persist_write_bool(KEY_VIBRATE, true);
+          APP_LOG(APP_LOG_LEVEL_INFO, "BT Vibe On");
+        } else if(strcmp(t->value->cstring, "no") == 0) {
+          persist_write_bool(KEY_VIBRATE, false);
+          APP_LOG(APP_LOG_LEVEL_INFO, "BT Vibe Off");
+        }
+        break;
       case KEY_UPDATE:
         persist_write_int(KEY_UPDATE, (int)t->value->int32);
         APP_LOG(APP_LOG_LEVEL_INFO, "Update Frequency: %d minutes", (int)persist_read_int(KEY_UPDATE));
@@ -340,6 +359,9 @@ static void init() {
   
   // Register with BatteryStateService
   battery_state_service_subscribe(pebble_battery_handler);
+  
+  // Register with BluetoothConnectionService
+  bluetooth_connection_service_subscribe(bluetooth_connection_handler);
   
   // Register callbacks
   app_message_register_inbox_received(inbox_received_callback);

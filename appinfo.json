@@ -5,7 +5,8 @@
         "KEY_INVERT": 4,
         "KEY_LOCATION": 3,
         "KEY_TEMPERATURE": 0,
-        "KEY_UPDATE": 5
+        "KEY_UPDATE": 5,
+        "KEY_VIBRATE": 6
     },
     "capabilities": [
         "location",
@@ -72,7 +73,7 @@
     "shortName": "Tinntime",
     "uuid": "545be81b-423d-4f4d-96a8-5eed25a20e0b",
     "versionCode": 1,
-    "versionLabel": "0.9",
+    "versionLabel": "1.0",
     "watchapp": {
         "watchface": true
     }
