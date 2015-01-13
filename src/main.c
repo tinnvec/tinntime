@@ -293,7 +293,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
         }
         break;
       case KEY_UPDATE:
-        persist_write_int(KEY_UPDATE, atoi(t->value->cstring));
+        persist_write_int(KEY_UPDATE, (int)t->value->int32);
         APP_LOG(APP_LOG_LEVEL_INFO, "Update Frequency: %d minutes", (int)persist_read_int(KEY_UPDATE));
         break;
       default:
