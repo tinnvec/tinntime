@@ -6,8 +6,7 @@
 #define KEY_LOCATION 3
 #define KEY_INVERT 4
 #define KEY_UPDATE 5
-#define KEY_VIBRATE 6
-
+  
 static Window *s_main_window;
 
 static BitmapLayer *s_conditions_icon_layer;
@@ -42,11 +41,11 @@ static void update_time() {
   // Get a tm structure
   time_t temp = time(NULL);
   struct tm *tick_time = localtime(&temp);
-
+  
   // Create a long-lived buffer
   static char time_buffer[] = "--:--";
   static char date_buffer[] = "Wed, September 30";
-
+  
   // Write the current hours and minutes into the buffer
   if(clock_is_24h_style() == true) {
     // Use 24 hour format
@@ -56,7 +55,7 @@ static void update_time() {
     strftime(time_buffer, sizeof("--:--"), "%I:%M", tick_time);
   }
   strftime(date_buffer, sizeof("Wed, September 30"), "%a, %B %e", tick_time);
-
+  
   // Display the time on the TextLayer
   text_layer_set_text(s_time_layer, time_buffer);
   text_layer_set_text(s_date_layer, date_buffer);
@@ -105,12 +104,6 @@ static void pebble_battery_handler(BatteryChargeState new_state) {
   update_battery();
 }
 
-static void bluetooth_connection_handler(bool connected) {
-  if(!connected && persist_write_bool(KEY_VIBRATE)) {
-    vibes_long_pulse();
-  }
-}
-
 static void set_font_style(TextLayer *current_layer, GFont new_font, GTextAlignment new_alignment, GColor new_background_color, GColor new_color) {
   text_layer_set_font(current_layer, new_font);
   text_layer_set_text_alignment(current_layer, new_alignment);
@@ -123,13 +116,13 @@ static void main_window_load(Window *window) {
   GRect window_bounds = layer_get_bounds(window_layer);
   int time_font_height = 51;
   int date_font_height = 28;
-
+  
   // Create GFonts
   s_temperature_font = fonts_get_system_font(FONT_KEY_BITHAM_42_LIGHT);
   s_time_font = fonts_get_system_font(FONT_KEY_ROBOTO_BOLD_SUBSET_49);
   s_date_font = fonts_get_system_font(FONT_KEY_GOTHIC_24);
   s_battery_font = fonts_get_system_font(FONT_KEY_GOTHIC_14);
-
+  
   // Create GBitmaps
   s_conditions_day_clear_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_DAY_CLEAR);
   s_conditions_night_clear_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_NIGHT_CLEAR);
@@ -140,51 +133,51 @@ static void main_window_load(Window *window) {
   s_conditions_thunderstorm_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_THUNDERSTORM);
   s_conditions_snow_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_SNOW);
   s_conditions_fog_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_FOG);
-
+  
   // Create Background Layer
   s_background_layer = layer_create(window_bounds);
   layer_set_update_proc(s_background_layer, background_update_proc);
-
+  
   // Create conditions icon Layer
   s_conditions_icon_layer = bitmap_layer_create(GRect(3, 3, 42, 42));
   bitmap_layer_set_alignment(s_conditions_icon_layer, GAlignTop);
-
+  
   // Create temperature layer
   s_temperature_layer = text_layer_create(GRect(48, -4, 96, 44));
   set_font_style(s_temperature_layer, s_temperature_font, GTextAlignmentRight, GColorClear, GColorWhite);
   text_layer_set_text(s_temperature_layer, "--°");
-
+  
   // Create conditions layer
   s_conditions_layer = text_layer_create(GRect(window_bounds.origin.x, 37, window_bounds.size.w, date_font_height));
   set_font_style(s_conditions_layer, s_date_font, GTextAlignmentCenter, GColorClear, GColorWhite);
-
+  
   // Create time TextLayer
   s_time_layer = text_layer_create(GRect(window_bounds.origin.x, 55, window_bounds.size.w, time_font_height));
   set_font_style(s_time_layer, s_time_font, GTextAlignmentCenter, GColorClear, GColorWhite);
-
+  
   // Create date TextLayer
   s_date_layer = text_layer_create(GRect(window_bounds.origin.x, 99, window_bounds.size.w, date_font_height));
   set_font_style(s_date_layer, s_date_font, GTextAlignmentCenter, GColorClear, GColorWhite);
-
+  
   // Create Location layer
   s_location_layer = text_layer_create(GRect(window_bounds.origin.x, 119, window_bounds.size.w, date_font_height));
   set_font_style(s_location_layer, s_date_font, GTextAlignmentCenter, GColorClear, GColorWhite);
-
+  
   // Create Pebble battery layer
   s_pebble_battery_layer = text_layer_create(GRect(window_bounds.origin.x, 152, 0, 16));
   set_font_style(s_pebble_battery_layer, s_battery_font, GTextAlignmentRight, GColorClear, GColorWhite);
-
+  
   // Create pebble battery visual layer
   s_pebble_battery_visual_layer = layer_create(window_bounds);
   layer_set_update_proc(s_pebble_battery_visual_layer, battery_update_proc);
-
+  
   // Create inversion layer
   s_inversion_layer = inverter_layer_create(window_bounds);
   //Check for saved option
   if(persist_read_bool(KEY_INVERT) == false) {
     layer_set_hidden((Layer*)s_inversion_layer, true);
   }
-
+  
   // Build window layers
   layer_add_child(window_layer, s_background_layer);
   layer_add_child(window_layer, bitmap_layer_get_layer(s_conditions_icon_layer));
@@ -196,7 +189,7 @@ static void main_window_load(Window *window) {
   layer_add_child(window_layer, text_layer_get_layer(s_pebble_battery_layer));
   layer_add_child(window_layer, s_pebble_battery_visual_layer);
   layer_add_child(window_layer, (Layer*)s_inversion_layer);
-
+  
   battery_state = battery_state_service_peek();
   update_time();
   update_battery();
@@ -213,10 +206,10 @@ static void main_window_unload(Window *window) {
   gbitmap_destroy(s_conditions_thunderstorm_bitmap);
   gbitmap_destroy(s_conditions_snow_bitmap);
   gbitmap_destroy(s_conditions_fog_bitmap);
-
+  
   // Destroy BitmapLayers
   bitmap_layer_destroy(s_conditions_icon_layer);
-
+  
   // Destroy TextLayers
   text_layer_destroy(s_temperature_layer);
   text_layer_destroy(s_conditions_layer);
@@ -224,11 +217,11 @@ static void main_window_unload(Window *window) {
   text_layer_destroy(s_date_layer);
   text_layer_destroy(s_location_layer);
   text_layer_destroy(s_pebble_battery_layer);
-
+  
   // Destroy Drawing layers
   layer_destroy(s_background_layer);
   layer_destroy(s_pebble_battery_visual_layer);
-
+  
   // Destroy inversion layer
   inverter_layer_destroy(s_inversion_layer);
 }
@@ -239,10 +232,10 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   static char conditions_buffer[64];
   static char location_buffer[64];
   static GBitmap *icon;
-
+  
   // Read first item
   Tuple *t = dict_read_first(iterator);
-
+  
   // For all items
   while(t != NULL) {
     // Which key was received?
@@ -299,15 +292,8 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
           persist_write_bool(KEY_INVERT, false);
         }
         break;
-      case KEY_VIBRATE:
-        if(strcmp(t->value->cstring, "yes") == 0) {
-          persist_write_bool(KEY_VIBRATE, true);
-        } else if(strcmp(t->value->cstring, "no") == 0) {
-          persist_write_bool(KEY_VIBRATE, false);
-        }
-        break;
       case KEY_UPDATE:
-        persist_write_int(KEY_UPDATE, (int)t->value->cstring);
+        persist_write_int(KEY_UPDATE, atoi(t->value->cstring));
         APP_LOG(APP_LOG_LEVEL_INFO, "Update Frequency: %d minutes", (int)persist_read_int(KEY_UPDATE));
         break;
       default:
@@ -317,7 +303,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     // Look for next item
     t = dict_read_next(iterator);
   }
-
+  
   bitmap_layer_set_bitmap(s_conditions_icon_layer, icon);
   text_layer_set_text(s_temperature_layer, temperature_buffer);
   text_layer_set_text(s_conditions_layer, conditions_buffer);
@@ -335,7 +321,7 @@ static void outbox_failed_callback(DictionaryIterator *iterator, AppMessageResul
 static void outbox_sent_callback(DictionaryIterator *iterator, void *context) {
   APP_LOG(APP_LOG_LEVEL_INFO, "Outbox send success!");
 }
-
+  
 static void init() {
   // Create main Window element and assign to pointer
   s_main_window = window_create();
@@ -348,16 +334,13 @@ static void init() {
 
   // Show the Window on the watch, with animated=true
   window_stack_push(s_main_window, true);
-
+  
   // Register with TickTimerService
   tick_timer_service_subscribe(MINUTE_UNIT, tick_handler);
-
+  
   // Register with BatteryStateService
   battery_state_service_subscribe(pebble_battery_handler);
-
-  // Register with BluetoothConnectionService
-  bluetooth_connection_service_subscribe(bluetooth_connection_handler);
-
+  
   // Register callbacks
   app_message_register_inbox_received(inbox_received_callback);
   app_message_open(app_message_inbox_size_maximum(), app_message_outbox_size_maximum());
