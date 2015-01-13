@@ -6,7 +6,6 @@
 #define KEY_LOCATION 3
 #define KEY_INVERT 4
 #define KEY_UPDATE 5
-#define KEY_VIBRATE 6
 
 static Window *s_main_window;
 
@@ -96,12 +95,6 @@ static void battery_update_proc(Layer *current_layer, GContext *ctx) {
   graphics_fill_rect(ctx, rect, 0, GCornerNone);
 }
 
-static void bluetooth_connection_handler(bool connected) {
-  if(!connected && persist_write_bool(KEY_VIBRATE)) {
-    vibes_long_pulse();
-  }
-}
-
 static void pebble_battery_handler(BatteryChargeState new_state) {
   battery_state = new_state;
   update_battery();
@@ -181,33 +174,20 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
       case KEY_CONDITIONS:
         snprintf(conditions_buffer, sizeof(conditions_buffer), "%s", t->value->cstring);
         text_layer_set_text(s_conditions_layer, conditions_buffer);
-        APP_LOG(APP_LOG_LEVEL_INFO, "Conditions: %s", conditions_buffer);
         break;
       case KEY_LOCATION:
         snprintf(location_buffer, sizeof(conditions_buffer), "%s", t->value->cstring);
         text_layer_set_text(s_location_layer, location_buffer);
-        APP_LOG(APP_LOG_LEVEL_INFO, "Location: %s", location_buffer);
         break;
       case KEY_INVERT:
         if(strcmp(t->value->cstring, "yes") == 0) {
           //Set and save as inverted
           layer_set_hidden((Layer*)s_inversion_layer, false);
           persist_write_bool(KEY_INVERT, true);
-          APP_LOG(APP_LOG_LEVEL_INFO, "Inverted");
         } else if(strcmp(t->value->cstring, "no") == 0) {
           //Set and save as not inverted
           layer_set_hidden((Layer*)s_inversion_layer, true);
           persist_write_bool(KEY_INVERT, false);
-          APP_LOG(APP_LOG_LEVEL_INFO, "Not Inverted");
-        }
-        break;
-      case KEY_VIBRATE:
-        if(strcmp(t->value->cstring, "yes") == 0) {
-          persist_write_bool(KEY_VIBRATE, true);
-          APP_LOG(APP_LOG_LEVEL_INFO, "Bluetooth Vibe On");
-        } else if(strcmp(t->value->cstring, "no") == 0) {
-          persist_write_bool(KEY_VIBRATE, false);
-          APP_LOG(APP_LOG_LEVEL_INFO, "Bluetooth Vibe Off");
         }
         break;
       case KEY_UPDATE:
@@ -382,7 +362,6 @@ static void init() {
   // Register with services
   tick_timer_service_subscribe(MINUTE_UNIT, tick_handler);
   battery_state_service_subscribe(pebble_battery_handler);
-  bluetooth_connection_service_subscribe(bluetooth_connection_handler);
 
   // Register callbacks
   app_message_register_inbox_received(inbox_received_callback);

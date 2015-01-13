@@ -86,7 +86,6 @@ Pebble.addEventListener('ready', function(e) {
   if (window.localStorage.getItem("tinntime_config") === null) {
     var configuration = {
       "invert": "no",
-      "vibe": "yes",
       "temp": "f",
       "gps": "yes",
       "zipcode": "00000",
@@ -129,7 +128,6 @@ Pebble.addEventListener('webviewclosed', function(e) {
 
   var dictionary = {
     "KEY_INVERT": configuration.invert,
-    "KEY_VIBRATE": configuration.vibe,
     "KEY_UPDATE": configuration.update
   };
 
