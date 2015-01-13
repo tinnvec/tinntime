@@ -116,66 +116,65 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
 
 static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
   Tuple *t = dict_read_first(iterator);
-  static char temperature_buffer[] = "100°";
-  static GBitmap *icon;
-  static char icon_log_prefix[] = "Weather icon is";
-  static char conditions_buffer[64];
-  static char location_buffer[64];
-  
   while(t != NULL) {
     switch(t->key) {
       case KEY_TEMPERATURE:
+        static char temperature_buffer[] = "100°";
         snprintf(temperature_buffer, sizeof(temperature_buffer), "%i%s", (int)t->value->int32, "°");
         text_layer_set_text(s_temperature_layer, temperature_buffer);
         break;
       case KEY_CONDITIONS_ICON:
+        static GBitmap *icon;
+        static char icon_log_prefix[] = "Weather icon is";
         if(strcmp(t->value->cstring, "01d") == 0) {
           icon = s_conditions_day_clear_bitmap; // Day Clear
-          APP_LOG(APP_LOG_LEVEL_INFO, "%s Day Clear", icon_log_prefix);
+          APP_LOG(APP_LOG_LEVEL_INFO, "%d Day Clear", icon_log_prefix);
         } else if(strcmp(t->value->cstring, "01n") == 0) {
           icon = s_conditions_night_clear_bitmap; // Night Clear
-          APP_LOG(APP_LOG_LEVEL_INFO, "%s Night Clear", icon_log_prefix);
+          APP_LOG(APP_LOG_LEVEL_INFO, "%d Night Clear", icon_log_prefix);
         } else if(strcmp(t->value->cstring, "02d") == 0) {
           icon =  s_conditions_day_few_clouds_bitmap; // Few Clouds Day
-          APP_LOG(APP_LOG_LEVEL_INFO, "%s Few Clouds Day", icon_log_prefix);
+          APP_LOG(APP_LOG_LEVEL_INFO, "%d Few Clouds Day", icon_log_prefix);
         } else if(strcmp(t->value->cstring, "02n") == 0) {
           icon =  s_conditions_night_few_clouds_bitmap; // Few Clouds Night
-          APP_LOG(APP_LOG_LEVEL_INFO, "%s Few Clouds Night", icon_log_prefix);
+          APP_LOG(APP_LOG_LEVEL_INFO, "%d Few Clouds Night", icon_log_prefix);
         } else if(strcmp(t->value->cstring, "03d") == 0 ||
                   strcmp(t->value->cstring, "03n") == 0 ||
                   strcmp(t->value->cstring, "04d") == 0 ||
                   strcmp(t->value->cstring, "04n") == 0) {
           icon = s_conditions_clouds_bitmap; // Clouds Day/Night
-          APP_LOG(APP_LOG_LEVEL_INFO, "%s Clouds Day/Night", icon_log_prefix);
+          APP_LOG(APP_LOG_LEVEL_INFO, "%d Clouds Day/Night", icon_log_prefix);
         } else if(strcmp(t->value->cstring, "09d") == 0 ||
                   strcmp(t->value->cstring, "09n") == 0 ||
                   strcmp(t->value->cstring, "10d") == 0 ||
                   strcmp(t->value->cstring, "10n") == 0) {
           icon = s_conditions_rain_bitmap; // Rain Day/Night
-          APP_LOG(APP_LOG_LEVEL_INFO, "%s Rain Day/Night", icon_log_prefix);
+          APP_LOG(APP_LOG_LEVEL_INFO, "%d Rain Day/Night", icon_log_prefix);
         } else if(strcmp(t->value->cstring, "11d") == 0 ||
                   strcmp(t->value->cstring, "11n") == 0) {
           icon = s_conditions_thunderstorm_bitmap; // Thunderstorm Day/Night
-          APP_LOG(APP_LOG_LEVEL_INFO, "%s Thunderstorm Day/Night", icon_log_prefix);
+          APP_LOG(APP_LOG_LEVEL_INFO, "%d Thunderstorm Day/Night", icon_log_prefix);
         } else if(strcmp(t->value->cstring, "13d") == 0 ||
                   strcmp(t->value->cstring, "13n") == 0) {
           icon = s_conditions_snow_bitmap; // Snow Day/Night
-          APP_LOG(APP_LOG_LEVEL_INFO, "%s Snow Day/Night", icon_log_prefix);
+          APP_LOG(APP_LOG_LEVEL_INFO, "%d Snow Day/Night", icon_log_prefix);
         } else if(strcmp(t->value->cstring, "50d") == 0 ||
                   strcmp(t->value->cstring, "50n") == 0) {
           icon = s_conditions_fog_bitmap; // Mist Day/Night
-          APP_LOG(APP_LOG_LEVEL_INFO, "%s Mist Day/Night", icon_log_prefix);
+          APP_LOG(APP_LOG_LEVEL_INFO, "%d Mist Day/Night", icon_log_prefix);
         } else {
           icon = NULL; // Unknown
-          APP_LOG(APP_LOG_LEVEL_INFO, "%s Unknown", icon_log_prefix);
+          APP_LOG(APP_LOG_LEVEL_INFO, "%d Unknown", icon_log_prefix);
         }
         bitmap_layer_set_bitmap(s_conditions_icon_layer, icon);
         break;
       case KEY_CONDITIONS:
+        static char conditions_buffer[64];
         snprintf(conditions_buffer, sizeof(conditions_buffer), "%s", t->value->cstring);
         text_layer_set_text(s_conditions_layer, conditions_buffer);
         break;
       case KEY_LOCATION:
+        static char location_buffer[64];
         snprintf(location_buffer, sizeof(conditions_buffer), "%s", t->value->cstring);
         text_layer_set_text(s_location_layer, location_buffer);
         break;
@@ -209,10 +208,6 @@ static void inbox_dropped_callback(AppMessageResult reason, void *context) {
 
 static void outbox_sent_callback(DictionaryIterator *iterator, void *context) {
   APP_LOG(APP_LOG_LEVEL_INFO, "Outbox send success!");
-}
-
-static void outbox_failed_callback(DictionaryIterator *iterator, AppMessageResult reason, void *context) {
-  APP_LOG(APP_LOG_LEVEL_ERROR, "Outbox send failed!");
 }
 
 static void main_window_load(Window *window) {
