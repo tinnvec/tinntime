@@ -5,8 +5,7 @@
         "KEY_INVERT": 4,
         "KEY_LOCATION": 3,
         "KEY_TEMPERATURE": 0,
-        "KEY_UPDATE": 5,
-        "KEY_VIBRATE": 6
+        "KEY_UPDATE": 5
     },
     "capabilities": [
         "location",
@@ -18,43 +17,9 @@
     "resources": {
         "media": [
             {
-                "file": "images/day_clear.png",
-                "name": "IMAGE_DAY_CLEAR",
-                "type": "png"
-            },
-            {
-                "file": "images/night_clear.png",
-                "name": "IMAGE_NIGHT_CLEAR",
-                "type": "png"
-            },
-            {
-                "file": "images/day_few_clouds.png",
-                "name": "IMAGE_DAY_FEW_CLOUDS",
-                "type": "png"
-            },
-            {
-                "file": "images/night_few_clouds.png",
-                "name": "IMAGE_NIGHT_FEW_CLOUDS",
-                "type": "png"
-            },
-            {
-                "file": "images/clouds.png",
-                "name": "IMAGE_CLOUDS",
-                "type": "png"
-            },
-            {
-                "file": "images/fog.png",
-                "name": "IMAGE_FOG",
-                "type": "png"
-            },
-            {
-                "file": "images/rain.png",
-                "name": "IMAGE_RAIN",
-                "type": "png"
-            },
-            {
-                "file": "images/snow.png",
-                "name": "IMAGE_SNOW",
+                "file": "images/menu_icon.png",
+                "menuIcon": true,
+                "name": "IMAGE_MENU_ICON",
                 "type": "png"
             },
             {
@@ -63,9 +28,43 @@
                 "type": "png"
             },
             {
-                "file": "images/menu_icon.png",
-                "menuIcon": true,
-                "name": "IMAGE_MENU_ICON",
+                "file": "images/snow.png",
+                "name": "IMAGE_SNOW",
+                "type": "png"
+            },
+            {
+                "file": "images/rain.png",
+                "name": "IMAGE_RAIN",
+                "type": "png"
+            },
+            {
+                "file": "images/fog.png",
+                "name": "IMAGE_FOG",
+                "type": "png"
+            },
+            {
+                "file": "images/clouds.png",
+                "name": "IMAGE_CLOUDS",
+                "type": "png"
+            },
+            {
+                "file": "images/night_few_clouds.png",
+                "name": "IMAGE_NIGHT_FEW_CLOUDS",
+                "type": "png"
+            },
+            {
+                "file": "images/day_few_clouds.png",
+                "name": "IMAGE_DAY_FEW_CLOUDS",
+                "type": "png"
+            },
+            {
+                "file": "images/night_clear.png",
+                "name": "IMAGE_NIGHT_CLEAR",
+                "type": "png"
+            },
+            {
+                "file": "images/day_clear.png",
+                "name": "IMAGE_DAY_CLEAR",
                 "type": "png"
             }
         ]
@@ -73,7 +72,7 @@
     "shortName": "Tinntime",
     "uuid": "545be81b-423d-4f4d-96a8-5eed25a20e0a",
     "versionCode": 1,
-    "versionLabel": "1.0",
+    "versionLabel": "0.9",
     "watchapp": {
         "watchface": true
     }
