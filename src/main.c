@@ -16,7 +16,8 @@ static TextLayer *s_conditions_layer;
 static TextLayer *s_time_layer;
 static TextLayer *s_date_layer;
 static TextLayer *s_location_layer;
-static TextLayer *s_pebble_battery_layer;
+static TextLayer *s_battery_meter_e;
+static TextLayer *s_battery_meter_f;
 static Layer *s_background_layer;
 static Layer *s_pebble_battery_visual_layer;
 static InverterLayer *s_inversion_layer;
@@ -82,17 +83,13 @@ static void background_update_proc(Layer *current_layer, GContext *ctx) {
 
 static void battery_update_proc(Layer *current_layer, GContext *ctx) {
   GRect rect;
-  rect.origin = GPoint(0, 156);
-  rect.size = GSize((int)(115 * ((double)battery_state.charge_percent / 100)), 12);
+  rect.origin = GPoint(9, 157);
+  rect.size = GSize((int)(126 * ((double)battery_state.charge_percent / 100)), 11);
   graphics_context_set_fill_color(ctx, GColorWhite);
   graphics_fill_rect(ctx, rect, 0, GCornerNone);
 }
 
 static void update_battery() {
-  static char battery_buffer[] = "100%";
-  text_layer_set_size(s_pebble_battery_layer, GSize(((int)(115 * ((double)battery_state.charge_percent / 100)) + 29), 16));
-  snprintf(battery_buffer, sizeof(battery_buffer), "%d%%", battery_state.charge_percent);
-  text_layer_set_text(s_pebble_battery_layer, battery_buffer);
   layer_mark_dirty(s_pebble_battery_visual_layer);
 }
 
@@ -130,7 +127,7 @@ static void main_window_load(Window *window) {
   s_temperature_font = fonts_get_system_font(FONT_KEY_BITHAM_42_LIGHT);
   s_time_font = fonts_get_system_font(FONT_KEY_ROBOTO_BOLD_SUBSET_49);
   s_date_font = fonts_get_system_font(FONT_KEY_GOTHIC_24);
-  s_battery_font = fonts_get_system_font(FONT_KEY_GOTHIC_14);
+  s_battery_font = fonts_get_system_font(FONT_KEY_GOTHIC_18);
   
   // Create GBitmaps
   s_conditions_day_clear_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_DAY_CLEAR);
@@ -173,9 +170,14 @@ static void main_window_load(Window *window) {
   set_font_style(s_location_layer, s_date_font, GTextAlignmentCenter, GColorClear, GColorWhite);
   text_layer_set_text(s_location_layer, "Loading");
   
-  // Create Pebble battery layer
-  s_pebble_battery_layer = text_layer_create(GRect(window_bounds.origin.x, 152, 0, 16));
-  set_font_style(s_pebble_battery_layer, s_battery_font, GTextAlignmentRight, GColorClear, GColorWhite);
+  // Create battery meter E/F
+  s_battery_meter_e = text_layer_create(GRect(window_bounds.origin.x, 150, window_bounds.size.w, 20));
+  set_font_style(s_battery_meter_e, s_battery_font, GTextAlignmentLeft, GColorClear, GColorWhite);
+  text_layer_set_text(s_battery_meter_e, "E");
+  
+  s_battery_meter_f = text_layer_create(GRect(window_bounds.origin.x, 150, window_bounds.size.w, 20));
+  set_font_style(s_battery_meter_f, s_battery_font, GTextAlignmentRight, GColorClear, GColorWhite);
+  text_layer_set_text(s_battery_meter_f, "F");
   
   // Create pebble battery visual layer
   s_pebble_battery_visual_layer = layer_create(window_bounds);
@@ -196,7 +198,8 @@ static void main_window_load(Window *window) {
   layer_add_child(window_layer, text_layer_get_layer(s_time_layer));
   layer_add_child(window_layer, text_layer_get_layer(s_date_layer));
   layer_add_child(window_layer, text_layer_get_layer(s_location_layer));
-  layer_add_child(window_layer, text_layer_get_layer(s_pebble_battery_layer));
+  layer_add_child(window_layer, text_layer_get_layer(s_battery_meter_e));
+  layer_add_child(window_layer, text_layer_get_layer(s_battery_meter_f));
   layer_add_child(window_layer, s_pebble_battery_visual_layer);
   layer_add_child(window_layer, (Layer*)s_inversion_layer);
   
@@ -226,7 +229,8 @@ static void main_window_unload(Window *window) {
   text_layer_destroy(s_time_layer);
   text_layer_destroy(s_date_layer);
   text_layer_destroy(s_location_layer);
-  text_layer_destroy(s_pebble_battery_layer);
+  text_layer_destroy(s_battery_meter_e);
+  text_layer_destroy(s_battery_meter_f);
   
   // Destroy Drawing layers
   layer_destroy(s_background_layer);
