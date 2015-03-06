@@ -18,7 +18,6 @@ static TextLayer *s_date_layer;
 static TextLayer *s_location_layer;
 static TextLayer *s_battery_meter_e;
 static TextLayer *s_battery_meter_f;
-static Layer *s_background_layer;
 static Layer *s_pebble_battery_visual_layer;
 static InverterLayer *s_inversion_layer;
 
@@ -73,18 +72,10 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
   }
 }
 
-static void background_update_proc(Layer *current_layer, GContext *ctx) {
-  GRect rect;
-  rect.origin = GPoint(0, 0);
-  rect.size = GSize(144, 168);
-  graphics_context_set_fill_color(ctx, GColorBlack);
-  graphics_fill_rect(ctx, rect, 0, GCornerNone);
-}
-
 static void battery_update_proc(Layer *current_layer, GContext *ctx) {
   GRect rect;
-  rect.origin = GPoint(9, 157);
-  rect.size = GSize((int)(126 * ((double)battery_state.charge_percent / 100)), 11);
+  rect.origin = GPoint(13, 154);
+  rect.size = GSize((int)(117 * ((double)battery_state.charge_percent / 100)), 11);
   graphics_context_set_fill_color(ctx, GColorWhite);
   graphics_fill_rect(ctx, rect, 0, GCornerNone);
 }
@@ -123,13 +114,16 @@ static void main_window_load(Window *window) {
   int time_font_height = 51;
   int date_font_height = 28;
   
-  // Create GFonts
+  // Set Background color to black
+  window_set_background_color(s_main_window, GColorBlack);
+  
+  // Create Fonts
   s_temperature_font = fonts_get_system_font(FONT_KEY_BITHAM_42_LIGHT);
   s_time_font = fonts_get_system_font(FONT_KEY_ROBOTO_BOLD_SUBSET_49);
   s_date_font = fonts_get_system_font(FONT_KEY_GOTHIC_24);
   s_battery_font = fonts_get_system_font(FONT_KEY_GOTHIC_18);
   
-  // Create GBitmaps
+  // Create Bitmaps
   s_conditions_day_clear_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_DAY_CLEAR);
   s_conditions_night_clear_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_NIGHT_CLEAR);
   s_conditions_day_few_clouds_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_DAY_FEW_CLOUDS);
@@ -140,12 +134,8 @@ static void main_window_load(Window *window) {
   s_conditions_snow_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_SNOW);
   s_conditions_fog_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_FOG);
   
-  // Create Background Layer
-  s_background_layer = layer_create(window_bounds);
-  layer_set_update_proc(s_background_layer, background_update_proc);
-  
   // Create conditions icon Layer
-  s_conditions_icon_layer = bitmap_layer_create(GRect(3, 3, 42, 42));
+  s_conditions_icon_layer = bitmap_layer_create(GRect(3, 4, 42, 42));
   bitmap_layer_set_alignment(s_conditions_icon_layer, GAlignTop);
   
   // Create temperature layer
@@ -154,44 +144,44 @@ static void main_window_load(Window *window) {
   text_layer_set_text(s_temperature_layer, "--°");
   
   // Create conditions layer
-  s_conditions_layer = text_layer_create(GRect(window_bounds.origin.x, 37, window_bounds.size.w, date_font_height));
+  s_conditions_layer = text_layer_create(GRect(0, 40, window_bounds.size.w, date_font_height));
   set_font_style(s_conditions_layer, s_date_font, GTextAlignmentCenter, GColorClear, GColorWhite);
   
   // Create time TextLayer
-  s_time_layer = text_layer_create(GRect(window_bounds.origin.x, 55, window_bounds.size.w, time_font_height));
+  s_time_layer = text_layer_create(GRect(0, 57, window_bounds.size.w, time_font_height));
   set_font_style(s_time_layer, s_time_font, GTextAlignmentCenter, GColorClear, GColorWhite);
   
   // Create date TextLayer
-  s_date_layer = text_layer_create(GRect(window_bounds.origin.x, 99, window_bounds.size.w, date_font_height));
+  s_date_layer = text_layer_create(GRect(0, 103, window_bounds.size.w, date_font_height));
   set_font_style(s_date_layer, s_date_font, GTextAlignmentCenter, GColorClear, GColorWhite);
   
   // Create Location layer
-  s_location_layer = text_layer_create(GRect(window_bounds.origin.x, 119, window_bounds.size.w, date_font_height));
+  s_location_layer = text_layer_create(GRect(0, 124, window_bounds.size.w, date_font_height));
   set_font_style(s_location_layer, s_date_font, GTextAlignmentCenter, GColorClear, GColorWhite);
   text_layer_set_text(s_location_layer, "Loading");
-  
-  // Create battery meter E/F
-  s_battery_meter_e = text_layer_create(GRect(window_bounds.origin.x, 150, window_bounds.size.w, 20));
-  set_font_style(s_battery_meter_e, s_battery_font, GTextAlignmentLeft, GColorClear, GColorWhite);
-  text_layer_set_text(s_battery_meter_e, "E");
-  
-  s_battery_meter_f = text_layer_create(GRect(window_bounds.origin.x, 150, window_bounds.size.w, 20));
-  set_font_style(s_battery_meter_f, s_battery_font, GTextAlignmentRight, GColorClear, GColorWhite);
-  text_layer_set_text(s_battery_meter_f, "F");
   
   // Create pebble battery visual layer
   s_pebble_battery_visual_layer = layer_create(window_bounds);
   layer_set_update_proc(s_pebble_battery_visual_layer, battery_update_proc);
   
+  // Create battery meter E/F
+  s_battery_meter_e = text_layer_create(GRect(3, 147, window_bounds.size.w, 20));
+  set_font_style(s_battery_meter_e, s_battery_font, GTextAlignmentLeft, GColorClear, GColorWhite);
+  text_layer_set_text(s_battery_meter_e, "E");
+  
+  s_battery_meter_f = text_layer_create(GRect(0, 147, window_bounds.size.w - 3, 20));
+  set_font_style(s_battery_meter_f, s_battery_font, GTextAlignmentRight, GColorClear, GColorWhite);
+  text_layer_set_text(s_battery_meter_f, "F");
+  
   // Create inversion layer
   s_inversion_layer = inverter_layer_create(window_bounds);
-  //Check for saved option
+  
+  //Check for saved inversion option
   if(persist_read_bool(KEY_INVERT) == false) {
     layer_set_hidden((Layer*)s_inversion_layer, true);
   }
   
   // Build window layers
-  layer_add_child(window_layer, s_background_layer);
   layer_add_child(window_layer, bitmap_layer_get_layer(s_conditions_icon_layer));
   layer_add_child(window_layer, text_layer_get_layer(s_temperature_layer));
   layer_add_child(window_layer, text_layer_get_layer(s_conditions_layer));
@@ -233,7 +223,6 @@ static void main_window_unload(Window *window) {
   text_layer_destroy(s_battery_meter_f);
   
   // Destroy Drawing layers
-  layer_destroy(s_background_layer);
   layer_destroy(s_pebble_battery_visual_layer);
   
   // Destroy inversion layer
