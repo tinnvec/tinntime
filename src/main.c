@@ -139,7 +139,7 @@ static void main_window_load(Window *window) {
   bitmap_layer_set_alignment(s_conditions_icon_layer, GAlignTop);
   
   // Create temperature layer
-  s_temperature_layer = text_layer_create(GRect(48, -4, 96, 44));
+  s_temperature_layer = text_layer_create(GRect(48, -4, 93, 44));
   set_font_style(s_temperature_layer, s_temperature_font, GTextAlignmentRight, GColorClear, GColorWhite);
   text_layer_set_text(s_temperature_layer, "--°");
   
