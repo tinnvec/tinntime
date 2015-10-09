@@ -118,7 +118,7 @@ Pebble.addEventListener('appmessage', function(e) {
 Pebble.addEventListener('showConfiguration', function(e) {
   //console.log("Configuration window launching...");
   var configuration, params;
-  var baseURL = 'https://www.googledrive.com/host/0B2tKMa3V6dkkN1Z4aGJSYU8xekU/?';
+  var baseURL = 'https://dl.dropboxusercontent.com/u/18589646/CDN/tinntime_settings.html?';
   if (window.localStorage.getItem("tinntime_config") !== null) {
     configuration = JSON.parse(window.localStorage.tinntime_config);
     params = Object.keys(configuration).map(function(k) {
