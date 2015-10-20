@@ -285,21 +285,21 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
         snprintf(location_buffer, sizeof(conditions_buffer), "%s", t->value->cstring);
         break;
       case KEY_INVERT:
-        if(strcmp(t->value->cstring, "yes") == 0) {
+        if(t->value->uint8 == 1) {
           //Set and save as inverted
           layer_set_hidden((Layer*)s_inversion_layer, false);
           persist_write_bool(KEY_INVERT, true);
-        } else if(strcmp(t->value->cstring, "no") == 0) {
+        } else {
           //Set and save as not inverted
           layer_set_hidden((Layer*)s_inversion_layer, true);
           persist_write_bool(KEY_INVERT, false);
         }
         break;
       case KEY_VIBRATE:
-        if(strcmp(t->value->cstring, "yes") == 0) {
+        if(t->value->uint8 == 1) {
           persist_write_bool(KEY_VIBRATE, true);
           APP_LOG(APP_LOG_LEVEL_INFO, "BT Vibe On");
-        } else if(strcmp(t->value->cstring, "no") == 0) {
+        } else {
           persist_write_bool(KEY_VIBRATE, false);
           APP_LOG(APP_LOG_LEVEL_INFO, "BT Vibe Off");
         }

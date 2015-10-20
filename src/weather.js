@@ -1,4 +1,5 @@
 /*jslint browser: true*/
+var ow_api = '944cae404e1e7852dd18f81da45928fc';
 
 function capitalizeEachWord(str) {
   return str.replace(/\w\S*/g, function(txt) {
@@ -7,20 +8,20 @@ function capitalizeEachWord(str) {
 }
 
 function locationSuccess(pos) {
-  // http://api.openweathermap.org/data/2.5/weather?q=53913,USA
-  // console.log('lat= ' + pos.coords.latitude + ' lon= ' + pos.coords.longitude);
   var configuration, url;
   var req = new XMLHttpRequest();
   
-  if (window.localStorage.getItem("tinntime_config") !== null) {
-    configuration = JSON.parse(window.localStorage.tinntime_config);
+  if (window.localStorage !== null) {
+    configuration = JSON.parse(window.localStorage);
   }
   
-  if (configuration.gps === "no") {
-    url = "http://api.openweathermap.org/data/2.5/weather?q=" + configuration.zipcode + ",USA";
+  if (configuration.useGps === false) {
+    url = "http://api.openweathermap.org/data/2.5/weather?q=" + configuration.zipCode + ",USA&appid=" + ow_api;
   } else {
-    url = "http://api.openweathermap.org/data/2.5/weather?lat=" + pos.coords.latitude + "&lon=" + pos.coords.longitude;
+    url = "http://api.openweathermap.org/data/2.5/weather?lat=" + pos.coords.latitude + "&lon=" + pos.coords.longitude + "&appid=" + ow_api;
   }
+  
+  console.log(url);
   
   req.open('GET', url, true);
   req.onload = function(e) {
@@ -33,12 +34,12 @@ function locationSuccess(pos) {
         var location = response.name;
         var conditions = capitalizeEachWord(response.weather[0].description);
         
-        if (window.localStorage.getItem("tinntime_config") !== null) {
-          configuration = JSON.parse(window.localStorage.tinntime_config);
+        if (window.localStorage !== null) {
+          configuration = JSON.parse(window.localStorage);
         }
         
         // Temperature in Kelvin requires adjustment
-        if(configuration.temp == "c") {
+        if(configuration.temperatureFormat == "C") {
           temperature = Math.round(temperature - 273.15);
         } else {
           temperature = Math.round(temperature * 9/5 - 459.675);
@@ -74,11 +75,11 @@ function locationError(err) {
 function getWeather() {
   var configuration;
   
-  if (window.localStorage.getItem("tinntime_config") !== null) {
-    configuration = JSON.parse(window.localStorage.tinntime_config);
+  if (window.localStorage !== null) {
+    configuration = JSON.parse(window.localStorage);
   }
   
-  if (configuration.gps === "no") {
+  if (configuration.useGps === "false") {
     locationSuccess(null);
   } else {
     var locationOptions = {
@@ -92,16 +93,16 @@ function getWeather() {
 
 // Listen for when the watchface is opened
 Pebble.addEventListener('ready', function(e) {
-  if (window.localStorage.getItem("tinntime_config") === null) {
+  if (window.localStorage.temperatureFormat === null) {
     var configuration = {
-      "invert": "yes",
-      "temp": "f",
-      "gps": "yes",
-      "zipcode": "000000",
-      "update": "30",
-      "vibe": "yes"
+      "invertColors": "true",
+      "temperatureFormat": "F",
+      "useGps": "true",
+      "zipCode": "000000",
+      "updateFrequency": "30",
+      "disconnectVibrate": "true"
     };
-    window.localStorage.tinntime_config = JSON.stringify(configuration);
+    window.localStorage = JSON.stringify(configuration);
   }
   console.log("PebbleKit JS ready!");
   // Get the initial weather
@@ -118,9 +119,9 @@ Pebble.addEventListener('appmessage', function(e) {
 Pebble.addEventListener('showConfiguration', function(e) {
   //console.log("Configuration window launching...");
   var configuration, params;
-  var baseURL = 'https://dl.dropboxusercontent.com/u/18589646/CDN/tinntime_settings.html?';
-  if (window.localStorage.getItem("tinntime_config") !== null) {
-    configuration = JSON.parse(window.localStorage.tinntime_config);
+  var baseURL = 'https://dl.dropboxusercontent.com/u/18589646/CDN/tinntime/settings.html?';
+  if (window.localStorage !== null) {
+    configuration = JSON.parse(window.localStorage);
     params = Object.keys(configuration).map(function(k) {
       return encodeURIComponent(k) + '=' + encodeURIComponent(configuration[k]);
     }).join('&');
@@ -133,13 +134,13 @@ Pebble.addEventListener('showConfiguration', function(e) {
 // Listen for configuration end event
 Pebble.addEventListener('webviewclosed', function(e) {
   var configuration = JSON.parse(decodeURIComponent(e.response));
-  window.localStorage.tinntime_config = JSON.stringify(configuration);
+  window.localStorage = JSON.stringify(configuration);
   console.log("Configuration window returned: " + JSON.stringify(configuration));
   
   var dictionary = {
-    "KEY_INVERT": configuration.invert,
-    "KEY_UPDATE": configuration.update,
-    "KEY_VIBRATE": configuration.vibe
+    "KEY_INVERT": configuration.invertColors,
+    "KEY_UPDATE": configuration.updateFrequency,
+    "KEY_VIBRATE": configuration.disconnectVibrate
   };
   
   //Send to Pebble, persist there
