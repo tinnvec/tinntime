@@ -1,4 +1,5 @@
 /*jslint browser: true*/
+var baseUrl = 'http://api.openweathermap.org/data/2.5/weather?';
 var ow_api = '944cae404e1e7852dd18f81da45928fc';
 
 function capitalizeEachWord(str) {
@@ -7,147 +8,117 @@ function capitalizeEachWord(str) {
   });
 }
 
-function locationSuccess(pos) {
-  var configuration, url;
-  var req = new XMLHttpRequest();
-  
-  if (window.localStorage !== null) {
-    configuration = JSON.parse(window.localStorage);
-  }
-  
-  if (configuration.useGps === false) {
-    url = "http://api.openweathermap.org/data/2.5/weather?q=" + configuration.zipCode + ",USA&appid=" + ow_api;
+function checkWeather() {
+  var gps = window.localStorage.getItem('useGps');
+  var zip = window.localStorage.getItem('zipCode');
+
+  if (gps == 'false' && zip !== '00000' && zip !== '') {
+    fetchWeather(baseUrl + 'q=' + zip + ',USA');
   } else {
-    url = "http://api.openweathermap.org/data/2.5/weather?lat=" + pos.coords.latitude + "&lon=" + pos.coords.longitude + "&appid=" + ow_api;
+    window.navigator.geolocation.getCurrentPosition(
+      function(pos) {
+        fetchWeather(baseUrl + 'lat=' + pos.coords.latitude + '&lon=' + pos.coords.longitude + '&cnt=1');
+      },
+      function(err) {
+        console.warn('location error (' + err.code + '): ' + err.message);
+        Pebble.sendAppMessage({
+          "KEY_TEMPERATURE": 0,
+          "KEY_CONDITIONS_ICON": '',
+          "KEY_CONDITIONS": '',
+          "KEY_LOCATION": 'Location Error'
+        });
+      },
+      { maximumAge: 1800000, timeout: 60000 }
+    );
   }
-  
-  console.log(url);
-  
-  req.open('GET', url, true);
-  req.onload = function(e) {
-    if (req.readyState == 4 && req.status == 200) {
-      if(req.status == 200) {
-        var configuration;
+}
+
+function fetchWeather(url) {
+  var req = new XMLHttpRequest();
+  req.open('GET', url + '&appid=' + ow_api, true);
+  req.onload = function () {
+    if (req.readyState === 4) {
+      if (req.status === 200) {
+        console.log(req.responseText);
         var response = JSON.parse(req.responseText);
         var temperature = response.main.temp;
         var icon = response.weather[0].icon;
-        var location = response.name;
+        var city = response.name;
         var conditions = capitalizeEachWord(response.weather[0].description);
         
-        if (window.localStorage !== null) {
-          configuration = JSON.parse(window.localStorage);
-        }
-        
         // Temperature in Kelvin requires adjustment
-        if(configuration.temperatureFormat == "C") {
+        if(window.localStorage.getItem('temperatureFormat') === "C") {
           temperature = Math.round(temperature - 273.15);
         } else {
           temperature = Math.round(temperature * 9/5 - 459.675);
         }
         
-        console.log("Temperature is " + temperature);
-        console.log("Conditions Icon: " + icon);
-        console.log("Location is " + location);
-        console.log("Conditions are " + conditions);
-        
-        var dictionary = {
+        Pebble.sendAppMessage({
           "KEY_TEMPERATURE": temperature,
           "KEY_CONDITIONS_ICON": icon,
           "KEY_CONDITIONS": conditions,
-          "KEY_LOCATION": location
-        };
-        
-        Pebble.sendAppMessage(dictionary, function(e) {
-          console.log("Weather info sent to Pebble successfully!");
-        }, function(e) {
-          console.log("Error sending weather info to Pebble!");
+          "KEY_LOCATION": city
         });
-      } else { console.log('Error'); }
+      } else {
+        console.log('Error');
+        Pebble.sendAppMessage({
+          "KEY_TEMPERATURE": 0,
+          "KEY_CONDITIONS_ICON": '',
+          "KEY_CONDITIONS": 'Weather Error',
+          "KEY_LOCATION": ''
+        });
+      }
     }
   };
   req.send(null);
 }
 
-function locationError(err) {
-  console.log('location error (' + err.code + '): ' + err.message);
-}
-
-function getWeather() {
-  var configuration;
-  
-  if (window.localStorage !== null) {
-    configuration = JSON.parse(window.localStorage);
-  }
-  
-  if (configuration.useGps === "false") {
-    locationSuccess(null);
-  } else {
-    var locationOptions = {
-      enableHighAccuracy: true, 
-      maximumAge: 10000, 
-      timeout: 10000
-    };
-    navigator.geolocation.getCurrentPosition(locationSuccess, locationError, locationOptions);
-  }
-}
-
 // Listen for when the watchface is opened
 Pebble.addEventListener('ready', function(e) {
-  if (window.localStorage.temperatureFormat === null) {
-    var configuration = {
-      "invertColors": "true",
-      "temperatureFormat": "F",
-      "useGps": "true",
-      "zipCode": "000000",
-      "updateFrequency": "30",
-      "disconnectVibrate": "true"
-    };
-    window.localStorage = JSON.stringify(configuration);
-  }
-  console.log("PebbleKit JS ready!");
-  // Get the initial weather
-  getWeather();
+  console.log(e.ready);
+  console.log(e.type);
+  checkWeather();
 });
 
 // Listen for when AppMessage is received
-Pebble.addEventListener('appmessage', function(e) {
-  console.log("AppMessage received!");
-  getWeather();
+Pebble.addEventListener('appmessage', function (e) {
+  console.log(e.type);
+  checkWeather();
 });
 
 // Listen for configuration event
-Pebble.addEventListener('showConfiguration', function(e) {
-  //console.log("Configuration window launching...");
-  var configuration, params;
-  var baseURL = 'https://dl.dropboxusercontent.com/u/18589646/CDN/tinntime/settings.html?';
-  if (window.localStorage !== null) {
-    configuration = JSON.parse(window.localStorage);
-    params = Object.keys(configuration).map(function(k) {
-      return encodeURIComponent(k) + '=' + encodeURIComponent(configuration[k]);
-    }).join('&');
+Pebble.addEventListener('showConfiguration', function (e) {
+  window.localStorage.removeItem('tinntime_config');
+  var url = 'http://dl.dropboxusercontent.com/u/18589646/cdn/tinntime/settings.html?v=2';
+  for (var i = 0; i < window.localStorage.length; i++) {
+    var key = window.localStorage.key(i);
+		var val = window.localStorage.getItem(key);
+		if (val !== null) {
+			url += "&" + encodeURIComponent(key) + "=" + encodeURIComponent(val);
+		}
   }
-  console.log("URL: " + baseURL + params);
-  // Show config page
-  Pebble.openURL(baseURL + params);
+  console.log(url);
+  Pebble.openURL(url);
 });
 
 // Listen for configuration end event
-Pebble.addEventListener('webviewclosed', function(e) {
-  var configuration = JSON.parse(decodeURIComponent(e.response));
-  window.localStorage = JSON.stringify(configuration);
-  console.log("Configuration window returned: " + JSON.stringify(configuration));
-  
-  var dictionary = {
-    "KEY_INVERT": configuration.invertColors,
-    "KEY_UPDATE": configuration.updateFrequency,
-    "KEY_VIBRATE": configuration.disconnectVibrate
-  };
-  
-  //Send to Pebble, persist there
-  Pebble.sendAppMessage(dictionary, function(e) {
-    console.log("Settings data sent successfully!");
-    getWeather();
-  }, function(e) {
-    console.log("Settings feedback failed!");
-  });
+Pebble.addEventListener('webviewclosed', function (e) {
+  console.log(e.type);
+  if (e.response) {
+    var values = JSON.parse(decodeURIComponent(e.response));
+    console.log("Configuration window returned: " + JSON.stringify(values));
+    for (var key in values) {
+      window.localStorage.setItem(key, values[key]);
+    }
+    Pebble.sendAppMessage({
+      "KEY_INVERT": values.invertColors,
+      "KEY_UPDATE": values.updateFrequency,
+      "KEY_VIBRATE": values.disconnectVibrate
+    }, function (e) {
+      console.log("Settings data sent successfully!");
+      checkWeather();
+    }, function (e) {
+      console.log("Settings feedback failed!" + e.error.message);
+    });
+  }
 });

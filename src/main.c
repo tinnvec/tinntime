@@ -90,12 +90,14 @@ static void pebble_battery_handler(BatteryChargeState new_state) {
 }
 
 static void bluetooth_connection_handler(bool connected) {
-  if(persist_read_bool(KEY_VIBRATE)) {
-    if(connected) {
-      text_layer_set_text(s_location_layer, "Connected");
+  if(connected) {
+    text_layer_set_text(s_location_layer, "Connected");
+    if(persist_read_bool(KEY_VIBRATE)) {
       vibes_short_pulse();
-    } else {
-      text_layer_set_text(s_location_layer, "Disconnected");
+    }
+  } else {
+    text_layer_set_text(s_location_layer, "Disconnected");
+    if(persist_read_bool(KEY_VIBRATE)) {
       vibes_long_pulse();
     }
   }
@@ -285,7 +287,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
         snprintf(location_buffer, sizeof(conditions_buffer), "%s", t->value->cstring);
         break;
       case KEY_INVERT:
-        if(t->value->uint8 == 1) {
+        if(t->value->int8 == 116) {
           //Set and save as inverted
           layer_set_hidden((Layer*)s_inversion_layer, false);
           persist_write_bool(KEY_INVERT, true);
@@ -296,12 +298,10 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
         }
         break;
       case KEY_VIBRATE:
-        if(t->value->uint8 == 1) {
+        if(t->value->int8 == 116) {
           persist_write_bool(KEY_VIBRATE, true);
-          APP_LOG(APP_LOG_LEVEL_INFO, "BT Vibe On");
         } else {
           persist_write_bool(KEY_VIBRATE, false);
-          APP_LOG(APP_LOG_LEVEL_INFO, "BT Vibe Off");
         }
         break;
       case KEY_UPDATE:
