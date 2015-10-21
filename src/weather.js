@@ -75,7 +75,7 @@ function fetchWeather(url) {
 
 // Listen for when the watchface is opened
 Pebble.addEventListener('ready', function(e) {
-  console.log(e.ready);
+  // console.log(e.ready);
   console.log(e.type);
   checkWeather();
 });
@@ -112,7 +112,7 @@ Pebble.addEventListener('webviewclosed', function (e) {
     }
     Pebble.sendAppMessage({
       "KEY_INVERT": values.invertColors,
-      "KEY_UPDATE": values.updateFrequency,
+      "KEY_UPDATE": parseInt(values.updateFrequency),
       "KEY_VIBRATE": values.disconnectVibrate
     }, function (e) {
       console.log("Settings data sent successfully!");
