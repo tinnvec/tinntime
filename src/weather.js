@@ -89,7 +89,7 @@ Pebble.addEventListener('appmessage', function (e) {
 // Listen for configuration event
 Pebble.addEventListener('showConfiguration', function (e) {
   window.localStorage.removeItem('tinntime_config');
-  var url = 'http://dl.dropboxusercontent.com/u/18589646/cdn/tinntime/settings.html?v=2';
+  var url = 'http://tinnvec.github.io/tinntime/settings.html?v=2';
   for (var i = 0; i < window.localStorage.length; i++) {
     var key = window.localStorage.key(i);
 		var val = window.localStorage.getItem(key);
