@@ -287,7 +287,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
         snprintf(location_buffer, sizeof(conditions_buffer), "%s", t->value->cstring);
         break;
       case KEY_INVERT:
-        if(t->value->int8 == 1) {
+        if(strcmp(t->value->cstring, "true") == 0) {
           //Set and save as inverted
           layer_set_hidden((Layer*)s_inversion_layer, false);
           persist_write_bool(KEY_INVERT, true);
@@ -298,7 +298,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
         }
         break;
       case KEY_VIBRATE:
-        if(t->value->int8 == 1) {
+        if(strcmp(t->value->cstring, "true") == 0) {
           persist_write_bool(KEY_VIBRATE, true);
         } else {
           persist_write_bool(KEY_VIBRATE, false);

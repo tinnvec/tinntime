@@ -110,9 +110,9 @@ Pebble.addEventListener('webviewclosed', function (e) {
       window.localStorage.setItem(key, values[key]);
     }
     Pebble.sendAppMessage({
-      "KEY_INVERT": values.invertColors,
+      "KEY_INVERT": values.invertColors.toString(),
       "KEY_UPDATE": parseInt(values.updateFrequency),
-      "KEY_VIBRATE": values.disconnectVibrate
+      "KEY_VIBRATE": values.disconnectVibrate.toString()
     }, function (e) {
       console.log("Settings data sent successfully!");
       checkWeather();
