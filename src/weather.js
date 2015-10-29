@@ -88,7 +88,6 @@ Pebble.addEventListener('appmessage', function (e) {
 
 // Listen for configuration event
 Pebble.addEventListener('showConfiguration', function (e) {
-  window.localStorage.removeItem('tinntime_config');
   var url = 'http://tinnvec.github.io/tinntime/settings.html?v=2';
   for (var i = 0; i < window.localStorage.length; i++) {
     var key = window.localStorage.key(i);
@@ -103,7 +102,7 @@ Pebble.addEventListener('showConfiguration', function (e) {
 
 // Listen for configuration end event
 Pebble.addEventListener('webviewclosed', function (e) {
-  console.log(e.type);
+  window.localStorage.clear();
   if (e.response) {
     var values = JSON.parse(decodeURIComponent(e.response));
     console.log("Configuration window returned: " + JSON.stringify(values));
