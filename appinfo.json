@@ -74,7 +74,7 @@
     "shortName": "Tinntime",
     "uuid": "545be81b-423d-4f4d-96a8-5eed25a20e0a",
     "versionCode": 1,
-    "versionLabel": "1.8",
+    "versionLabel": "1.10",
     "watchapp": {
         "watchface": true
     }
